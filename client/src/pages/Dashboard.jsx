@@ -93,21 +93,23 @@ const Dashboard = () => {
               </div>
 
               <div className="grid grid-cols-3 gap-4 mb-6">
-                <div className="bg-green-50 p-4 rounded-lg">
+                <div className="bg-green-100 p-4 rounded-lg">
                   <div className="flex justify-between">
                     <Award color="green" size={20} />
                     <span className="text-green-600 font-bold">{student.basePoints}</span>
                   </div>
                   <p className="text-green-600 mt-2">Base Points</p>
                 </div>
-                <div className="bg-red-50 p-4 rounded-lg">
+
+                <div className="bg-red-100 p-4 rounded-lg">
                   <div className="flex justify-between">
                     <AlertTriangle color="red" size={20} />
                     <span className="text-red-600 font-bold">{student.deductions}</span>
                   </div>
                   <p className="text-red-600 mt-2">Total Deductions</p>
                 </div>
-                <div className="bg-blue-50 p-4 rounded-lg">
+
+                <div className="bg-blue-100 p-4 rounded-lg">
                   <div className="flex justify-between">
                     <Award color="blue" size={20} />
                     <span className="text-blue-600 font-bold">+{student.bonusPoints}</span>
