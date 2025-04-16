@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { BookOpen, Clock, Award, AlertTriangle, Camera } from 'lucide-react';
 import { BsPersonCircle } from "react-icons/bs";
-import HomeLayouts from '../Layouts/HomeLayouts';
-import Action from '../Components/Action';
+import HomeLayouts from '../../Layouts/HomeLayouts';
+import Action from '../../Components/Action';
 
 const Dashboard = () => {
   const [previewImage, setPreviewImage] = useState("");
