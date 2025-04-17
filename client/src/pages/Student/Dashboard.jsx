@@ -1,42 +1,35 @@
-import React, { useState } from 'react';
-import { BookOpen, Clock, Award, AlertTriangle, Camera } from 'lucide-react';
+import React from 'react';
+import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { BookOpen, Clock, Award, AlertTriangle } from 'lucide-react';
 import { BsPersonCircle } from "react-icons/bs";
 import HomeLayouts from '../../Layouts/HomeLayouts';
 import Action from '../../Components/Action';
 
 const Dashboard = () => {
-  const [previewImage, setPreviewImage] = useState("");
+  const navigate = useNavigate();
+  const userData = useSelector(state => state?.auth?.data);
 
-  // Sample student data
   const student = {
-    name: "Sarah Johnson",
-    id: 1,
-    totalPoints: 107,
-    basePoints: 100,
-    deductions: -8,
-    bonusPoints: 15,
-    academic: {
-      assignmentsCompleted: "45/50",
-      currentGrade: "A-",
-      classRank: "5/30"
-    },
-    attendance: {
-      present: "95%",
-      late: "3%",
-      absent: "2%"
-    },
-  };
+    name: userData?.fullName || "Student Name",
+    id: userData?.id || "N/A",
+    profilePicture: userData?.profilePicture || "",
 
-  // Handle profile picture change
-  const handleProfilePictureChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewImage(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
+    totalPoints: userData?.points?.total || 100,
+    basePoints: userData?.points?.base || 100,
+    deductions: userData?.points?.deductions || -0,
+    bonusPoints: userData?.points?.bonus || 0,
+
+    academic: userData?.academic || {
+      assignmentsCompleted: "0/0",
+      currentGrade: "N/A",
+      classRank: "N/A"
+    },
+    attendance: userData?.attendance || {
+      present: "0%",
+      late: "0%",
+      absent: "0%"
+    },
   };
 
   return (
@@ -44,42 +37,23 @@ const Dashboard = () => {
       <div className="min-h-screen bg-gray-100">
         <div className="container mx-auto p-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Left Section (Student Info, Points, and Action) */}
+            {/* Left Section */}
             <div className="md:col-span-2 bg-white rounded-lg shadow p-6">
               <div className="flex justify-between mb-6">
                 <div className="flex items-center">
-                  {/* Improved Profile Picture Section */}
-                  <div className="relative mr-4 group">
-                    <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-indigo-200 cursor-pointer">
-                      {previewImage ? (
+                  {/* Profile Picture */}
+                  <div className="relative mr-4">
+                    <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-indigo-200 bg-gray-100 flex items-center justify-center">
+                      {student.profilePicture ? (
                         <img
-                          className="w-full h-full object-cover"
-                          src={previewImage}
+                          src={student.profilePicture}
                           alt="Profile"
+                          className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                          <BsPersonCircle className="w-16 h-16 text-gray-400" />
-                        </div>
+                        <BsPersonCircle className="w-16 h-16 text-gray-400" />
                       )}
                     </div>
-
-                    {/* Camera Icon Overlay */}
-                    <label
-                      htmlFor="profilePic"
-                      className="absolute bottom-0 right-0 bg-indigo-600 text-white p-2 rounded-full cursor-pointer shadow-md hover:bg-indigo-700 transition-all duration-300"
-                    >
-                      <Camera size={16} />
-                    </label>
-
-                    <input
-                      onChange={handleProfilePictureChange}
-                      type="file"
-                      name="image_uploads"
-                      id="profilePic"
-                      accept=".jpg, .jpeg, .png, .svg"
-                      className="hidden"
-                    />
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold text-gray-800">{student.name}</h2>
@@ -92,6 +66,7 @@ const Dashboard = () => {
                 </div>
               </div>
 
+              {/* Points Breakdown */}
               <div className="grid grid-cols-3 gap-4 mb-6">
                 <div className="bg-green-100 p-4 rounded-lg">
                   <div className="flex justify-between">
@@ -118,13 +93,13 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {/* Action Section - Placed Below Points */}
+              {/* Action Buttons */}
               <div className="mt-6">
                 <Action />
               </div>
             </div>
 
-            {/* Right Section (Academic and Attendance) */}
+            {/* Right Section */}
             <div className="md:col-span-1">
               {/* Academic Performance */}
               <div className="bg-white rounded-lg shadow p-6 mb-4">
@@ -132,7 +107,6 @@ const Dashboard = () => {
                   <BookOpen className="mr-2 text-gray-600" size={20} />
                   <h3 className="text-lg font-semibold text-gray-800">Academic Performance</h3>
                 </div>
-
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <p className="text-gray-600">Assignments Completed</p>
@@ -155,7 +129,6 @@ const Dashboard = () => {
                   <Clock className="mr-2 text-gray-600" size={20} />
                   <h3 className="text-lg font-semibold text-gray-800">Attendance</h3>
                 </div>
-
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <p className="text-gray-600">Present</p>

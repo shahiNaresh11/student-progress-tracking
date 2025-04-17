@@ -1,40 +1,81 @@
 import { useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { login } from "../../Redux/Slices/AuthSlice";
+import "react-toastify/dist/ReactToastify.css";
+import { useDispatch } from "react-redux";
 
 function Login() {
-
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+
     const [loginData, setloginData] = useState({
         email: "",
-        password: ""
+        password: "",
+    });
 
-
-    })
     function handleUserInput(e) {
         const { name, value } = e.target;
-        setloginData({
-            ...loginData,
-            [name]: value
-        })
+        setloginData((prevData) => ({
+            ...prevData,
+            [name]: value,
+        }));
     }
-    function handleSubmit(e) {
-        e.preventDefault(); // Prevent default form submission
 
-        // Demo credentials check
-        if (loginData.email === "demo@example.com" && loginData.password === "123") {
-            navigate("/home");
-        } else {
-            alert("Invalid credentials for demo. Use email: demo@example.com and password: password123");
+    async function handleSubmit(e) {
+        e.preventDefault();
+        const { email, password } = loginData;
+
+        if (!email || !password) {
+            toast.error("Please fill all the details");
+            return;
         }
+
+        // ✅ Fake login check
+        if (email === "demo@example.com" && password === "password123") {
+            const fakeUser = {
+                name: "Demo User",
+                email: "demo@example.com",
+                role: "student",
+                id: "demo-id-123"
+            };
+
+            // Save to localStorage
+            localStorage.setItem("data", JSON.stringify(fakeUser));
+            localStorage.setItem("isLoggedIn", "true");
+            localStorage.setItem("role", fakeUser.role);
+
+            toast.success("Logged in as demo user!");
+            navigate("/home");
+            return;
+        }
+
+        // ✅ Real login
+        try {
+            const response = await dispatch(login(loginData));
+            if (response.payload?.success) {
+                navigate("/");
+            } else {
+                toast.error("Login failed. Please check your credentials.");
+            }
+        } catch (error) {
+            toast.error("Something went wrong. Try again later.");
+            console.error("Login Error:", error);
+        }
+
+        setloginData({
+            email: "",
+            password: "",
+        });
     }
-
-
-
-
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-            <form noValidate onSubmit={handleSubmit} className=" flex flex-col gap-6 p-8 rounded-2xl shadow-2xl w-full max-w-md bg-white backdrop-blur-sm bg-opacity-90 animate-fade-in-up">
+            <form
+                noValidate
+                onSubmit={handleSubmit}
+                className="flex flex-col gap-6 p-8 rounded-2xl shadow-2xl w-full max-w-md bg-white backdrop-blur-sm bg-opacity-90 animate-fade-in-up"
+            >
                 <div className="text-center">
                     <h1 className="text-3xl font-extrabold text-gray-900 animate-fade-in">Welcome Back</h1>
                     <p className="mt-2 text-gray-600 animate-fade-in delay-100">Please sign in to continue</p>
@@ -54,6 +95,7 @@ function Login() {
                             </div>
                             <input
                                 type="email"
+                                autoComplete="email"
                                 required
                                 name="email"
                                 id="email"
@@ -77,10 +119,11 @@ function Login() {
                             </div>
                             <input
                                 type="password"
+                                autoComplete="current-password"
                                 required
                                 name="password"
                                 id="password"
-                                placeholder="••••••••"
+                                placeholder="•••"
                                 className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                                 onChange={handleUserInput}
                                 value={loginData.password}

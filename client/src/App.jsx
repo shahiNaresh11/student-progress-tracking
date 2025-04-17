@@ -9,8 +9,9 @@ import AssignmentPage from './pages/AssignmentPage'
 import RecordsPage from './pages/RecordsPage'
 import Class from './pages/AdminDa/Class'
 import StudentList from './pages/AdminDa/StudentList'
-import Action from './Components/Action'
+
 import ActionPage from './pages/AdminDa/ActionPage'
+import NotFound from './pages/NotFound'
 
 
 
@@ -34,7 +35,7 @@ function App() {
         <Route path="/profile" element={<Class />}></Route>
 
 
-
+        <Route path='*' element={<NotFound />}> </Route>
 
       </Routes>
 
