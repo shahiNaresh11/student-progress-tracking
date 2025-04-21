@@ -2,94 +2,91 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import toast from "react-hot-toast";
 import axiosInstance from "../../Helpers/axiousInstance";
 
-// Safe JSON parse
-const parseJSON = (value, fallback) => {
-  try {
-    return JSON.parse(value) || fallback;
-  } catch (e) {
-    return fallback;
-  }
-};
-
+// Initial state setup
 const initialState = {
-  isLoggedIn: localStorage.getItem("isLoggedIn") === "true",
+  isLoggedIn: localStorage.getItem("isLoggedIn") === "true",  // Ensuring boolean value
   role: localStorage.getItem("role") || "",
-  data: parseJSON(localStorage.getItem("data"), {}),
+  data: JSON.parse(localStorage.getItem("data")) || {},
 };
 
-// Async thunk for real login
+// Async thunk for login
 export const login = createAsyncThunk("/auth/login", async (data) => {
   try {
-    const res = axiosInstance.post("user/login", data);
-    toast.promise(res, {
+    const loginPromise = axiosInstance.post("user/login", data);
+    console.log(loginPromise);
+
+    toast.promise(loginPromise, {
       loading: "Authenticating...",
-      success: (data) => data?.data?.message || "Login successful!",
-      error: "Login failed",
+      success: (res) => res?.data?.message || "Login successful!",
+      error: (err) => err?.response?.data?.message || "Login failed",
     });
-    return (await res).data;
+
+    const res = await loginPromise;
+    return res.data;
   } catch (error) {
-    toast.error(error?.response?.data?.message || "Login error");
+    // Optional here because toast.promise already handles it
     throw error;
   }
 });
 
-// Logout thunk
+
+// Async thunk for logout
+// Async thunk for logout
 export const logout = createAsyncThunk("/auth/logout", async () => {
   try {
-    const res = axiosInstance.post("user/logout");
-    toast.promise(res, {
+    const logoutPromise = axiosInstance.post("user/logout");
+    console.log(logoutPromise);
+
+    toast.promise(logoutPromise, {
       loading: "Logging out...",
-      success: (data) => data?.data?.message || "Logged out!",
-      error: "Logout failed",
+      success: (res) => res?.data?.message || "Logged out successfully!",
+      error: (err) => err?.response?.data?.message || "Logout failed",
     });
-    return (await res).data;
+
+    const res = await logoutPromise;
+    return res.data;
   } catch (error) {
-    toast.error(error?.response?.data?.message || "Logout error");
+    // Optional here because toast.promise already handles it
     throw error;
   }
 });
-
-// Get user data thunk
+// Async thunk to get user data
 export const getUserData = createAsyncThunk("/auth/getData", async () => {
   try {
-    const response = axiosInstance.get("/user/me");
-    return (await response).data;
+    // Fetch user data
+    const response = await axiosInstance.get("/user/me");
+    return response.data;  // Returning the user data
   } catch (error) {
     toast.error(error?.message || "Failed to fetch user");
     throw error;
   }
 });
 
-// Auth slice
+// Auth slice to handle login/logout states and actions
 const authSlice = createSlice({
   name: "auth",
   initialState,
-  reducers: {
-    loginFakeUser: (state, action) => {
-      const { user } = action.payload;
-      localStorage.setItem("data", JSON.stringify(user));
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("role", user.role);
-
-      state.data = user;
-      state.isLoggedIn = true;
-      state.role = user.role;
-    },
-  },
+  reducers: {},  // No reducers, only async thunks are used
   extraReducers: (builder) => {
     builder
+      // Handle successful login
       .addCase(login.fulfilled, (state, action) => {
         const user = action?.payload?.user;
+
+        // Update localStorage with user info
         localStorage.setItem("data", JSON.stringify(user));
         localStorage.setItem("isLoggedIn", "true");
         localStorage.setItem("role", user?.role || "");
 
+        // Update state with user data
         state.isLoggedIn = true;
         state.data = user;
         state.role = user?.role || "";
       })
 
+      // Handle successful logout
       .addCase(logout.fulfilled, (state) => {
+        // Clear localStorage and reset state
         localStorage.clear();
         state.data = {};
         state.isLoggedIn = false;
@@ -98,5 +95,4 @@ const authSlice = createSlice({
   },
 });
 
-export const { loginFakeUser } = authSlice.actions;
 export default authSlice.reducer;

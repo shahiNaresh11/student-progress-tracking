@@ -1,24 +1,30 @@
-// index.js
+import dotenv from 'dotenv';
 import app from './app.js';
-// import connectToDB from './configs/dbConn.js'; // Commented out to skip DB connection
+import pool from './configs/dbConfig.js';
+
+dotenv.config();
 
 const PORT = process.env.PORT || 5000;
 
-const initializeAdminUser = () => {
+const initializeAdminUser = async () => {
     if (process.env.DB_CONNECTION !== 'false') {
-        // Mock logic for DB-dependent user initialization
-        console.log("Admin user initialized with DB.");
+        try {
+            const client = await pool.connect();
+            console.log('✅ Database connected.');
+
+            // Add any admin init logic here
+            console.log('👤 Admin user initialized.');
+
+            client.release();
+        } catch (err) {
+            console.error('❌ DB Init Error:', err.message);
+        }
     } else {
-        console.log("Skipping admin user initialization.");
+        console.log('⏭️ Skipping DB init (disabled).');
     }
 };
 
 app.listen(PORT, async () => {
-    // Conditionally connect to DB (commented out to skip DB)
-    // await connectToDB(); // Database connection is skipped
-    console.log("Database connection skipped."); // Inform that DB is not being connected
-
-    initializeAdminUser(); // Admin user initialization logic
-    console.log(`App is running at http://localhost:${PORT}`);
+    console.log(`🚀 Server is running at http://localhost:${PORT}`);
+    await initializeAdminUser();
 });
-

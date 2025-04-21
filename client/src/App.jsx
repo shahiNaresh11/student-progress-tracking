@@ -1,45 +1,39 @@
-
 import './App.css'
 import { Routes, Route } from 'react-router-dom'
 
-import Login from './pages/Student/Login'
+import Login from './pages/Login'
 import HomeLayouts from './Layouts/HomeLayouts'
 import Dashboard from './pages/Student/Dashboard'
 import AssignmentPage from './pages/AssignmentPage'
 import RecordsPage from './pages/RecordsPage'
 import Class from './pages/AdminDa/Class'
 import StudentList from './pages/AdminDa/StudentList'
-
 import ActionPage from './pages/AdminDa/ActionPage'
 import NotFound from './pages/NotFound'
-
-
-
+import SuperDashboard from './pages/superAdmin/SuperDashboard'
 
 function App() {
-
-
   return (
-    <>
-      <Routes>
-        <Route path="/" element={<Login />}></Route>
-        <Route path="/lay" element={<HomeLayouts />}></Route>
-        <Route path="/home" element={<Dashboard />}></Route>
-        <Route path="/assignment" element={<AssignmentPage />}></Route>
-        <Route path="/records" element={<RecordsPage />}></Route>
-        <Route path="/assignment" element={<AssignmentPage />}></Route>
-        {/* <Route path="/profile" element={<Profile />}></Route> */}
-        <Route path="/admin/classes/:id/students" element={<StudentList />} />
-        <Route path="/add-points/:studentId" element={<ActionPage />} />
+    <Routes>
+      {/* Public Route */}
+      <Route path="/" element={<Login />} />
 
-        <Route path="/profile" element={<Class />}></Route>
+      {/* Protected Routes with Layout */}
+      <Route element={<HomeLayouts />}>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/assignment" element={<AssignmentPage />} />
+        <Route path="/records" element={<RecordsPage />} />
+        <Route path="/superAdmin" element={<SuperDashboard />} />
 
 
-        <Route path='*' element={<NotFound />}> </Route>
+      </Route>
 
-      </Routes>
-
-    </>
+      <Route path="/profile" element={<Class />} />
+      <Route path="/admin/classes/:id/students" element={<StudentList />} />
+      <Route path="/add-points/:studentId" element={<ActionPage />} />
+      {/* Fallback */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   )
 }
 
