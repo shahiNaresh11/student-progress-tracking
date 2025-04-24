@@ -1,30 +1,27 @@
 import dotenv from 'dotenv';
 import app from './app.js';
-import pool from './configs/dbConfig.js';
+import sequelize from './configs/dbConfig.js';
+import { initSuperAdminUser } from './utils/initSuperAdmin.js';
+import { v2 as cloudinary } from 'cloudinary';
 
 dotenv.config();
 
+// Cloudinary config
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 const PORT = process.env.PORT || 5000;
 
-const initializeAdminUser = async () => {
-    if (process.env.DB_CONNECTION !== 'false') {
-        try {
-            const client = await pool.connect();
-            console.log('✅ Database connected.');
-
-            // Add any admin init logic here
-            console.log('👤 Admin user initialized.');
-
-            client.release();
-        } catch (err) {
-            console.error('❌ DB Init Error:', err.message);
-        }
-    } else {
-        console.log('⏭️ Skipping DB init (disabled).');
-    }
-};
-
 app.listen(PORT, async () => {
-    console.log(`🚀 Server is running at http://localhost:${PORT}`);
-    await initializeAdminUser();
+    try {
+        await sequelize.authenticate(); // ✅ DB connection check
+        await sequelize.sync({ alter: true }); // ✅ auto update tables with model fields
+        await initSuperAdminUser(); // ✅ seed super admin user
+        console.log(`🚀 Server running on http://localhost:${PORT}`);
+    } catch (err) {
+        console.error('❌ DB Connection Failed:', err.message);
+    }
 });

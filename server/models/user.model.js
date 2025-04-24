@@ -1,20 +1,9 @@
-import { Sequelize, DataTypes, Model } from 'sequelize';
+import { DataTypes, Model } from 'sequelize';
 import dotenv from 'dotenv';
+import sequelize from '../configs/dbConfig.js';
 
 // Load environment variables from .env file
 dotenv.config();
-
-// Read from environment variables
-const sequelize = new Sequelize(
-    process.env.DB_NAME,
-    process.env.DB_USER,
-    process.env.DB_PASSWORD,
-    {
-        host: process.env.DB_HOST,
-        dialect: 'postgres',
-        port: process.env.DB_PORT,
-    }
-);
 
 class User extends Model { }
 
@@ -37,6 +26,7 @@ User.init(
                 isEmail: true,
             },
         },
+
         password: {
             type: DataTypes.STRING,
             allowNull: false,
@@ -58,9 +48,20 @@ User.init(
             },
         },
         role: {
-            type: DataTypes.ENUM('STUDENT', 'TEACHER', 'SUPERADMIN'),
-            defaultValue: 'TEACHER',
+            type: DataTypes.ENUM('student', 'teacher', 'superAdmin'),
+            defaultValue: 'student',
         },
+
+        class: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        section: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+
+
     },
     {
         sequelize,

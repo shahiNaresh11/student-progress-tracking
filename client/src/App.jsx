@@ -11,6 +11,8 @@ import StudentList from './pages/AdminDa/StudentList'
 import ActionPage from './pages/AdminDa/ActionPage'
 import NotFound from './pages/NotFound'
 import SuperDashboard from './pages/superAdmin/SuperDashboard'
+import AddStudent from './pages/superAdmin/AddStudent'
+import AddTeacher from './pages/superAdmin/AddTeacher'
 
 function App() {
   return (
@@ -23,15 +25,20 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/assignment" element={<AssignmentPage />} />
         <Route path="/records" element={<RecordsPage />} />
-        <Route path="/superAdmin" element={<SuperDashboard />} />
-
 
       </Route>
+
 
       <Route path="/profile" element={<Class />} />
       <Route path="/admin/classes/:id/students" element={<StudentList />} />
       <Route path="/add-points/:studentId" element={<ActionPage />} />
-      {/* Fallback */}
+
+
+      <Route path="/superAdmin" element={<SuperDashboard />} />
+      <Route path="/addstudent" element={<AddStudent />} />
+      <Route path="/addteacher" element={<AddTeacher />} />
+
+
       <Route path="*" element={<NotFound />} />
     </Routes>
   )
