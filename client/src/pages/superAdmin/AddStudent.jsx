@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { createAccount } from '../../Redux/Slices/AuthSlice';
 import SuperAdminLayout from '../../Layouts/SuperAdminLayout';
-
 function AddStudent() {
     const dispatch = useDispatch();
     const [formData, setFormData] = useState({
@@ -33,30 +32,52 @@ function AddStudent() {
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
-        if (file) {
-            // Validate image type and size
-            if (!file.type.match('image.*')) {
-                setMessage({ text: 'Please select an image file', type: 'error' });
-                return;
-            }
+        if (!file) return;
 
-            if (file.size > 2 * 1024 * 1024) { // 2MB limit
-                setMessage({ text: 'Image size should be less than 2MB', type: 'error' });
-                return;
-            }
-
-            setFormData(prevState => ({
-                ...prevState,
-                profilePic: file
-            }));
-
-            // Create preview URL
-            const reader = new FileReader();
-            reader.onload = () => {
-                setPreviewImage(reader.result);
-            };
-            reader.readAsDataURL(file);
+        // Validate image type and size
+        if (!file.type.match('image.*')) {
+            console.error('Invalid file type:', file.type);
+            setMessage({ text: 'Please select an image file', type: 'error' });
+            return;
         }
+
+        if (file.size > 2 * 1024 * 1024) { // 2MB limit
+            console.error('File too large:', file.size);
+            setMessage({ text: 'Image size should be less than 2MB', type: 'error' });
+            return;
+        }
+
+        setFormData(prevState => ({
+            ...prevState,
+            profilePic: file
+        }));
+
+        // Create preview URL
+        const reader = new FileReader();
+        reader.onload = () => {
+            setPreviewImage(reader.result);
+        };
+        reader.onerror = () => {
+            console.error('Error reading file:', reader.error);
+            setMessage({ text: 'Error processing image', type: 'error' });
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const resetForm = () => {
+        setFormData({
+            name: '',
+            studentClass: '',
+            section: '',
+            gender: '',
+            email: '',
+            password: '',
+            phone: '',
+            address: '',
+            profilePic: null,
+            role: 'student'
+        });
+        setPreviewImage(null);
     };
 
     const handleSubmit = async (e) => {
@@ -64,49 +85,37 @@ function AddStudent() {
         setIsLoading(true);
         setMessage({ text: '', type: '' });
 
+        // Basic required fields validation
+        const requiredFields = ['name', 'email', 'password'];
+        const missingFields = requiredFields.filter(field => !formData[field]);
+
+        if (missingFields.length > 0) {
+            console.error('Missing required fields:', missingFields);
+            setMessage({ text: 'Please fill all required fields', type: 'error' });
+            setIsLoading(false);
+            return;
+        }
+
         try {
-            // Basic form validation
-            if (!formData.name || !formData.email || !formData.password) {
-                setMessage({ text: 'Please fill all required fields', type: 'error' });
-                setIsLoading(false);
-                return;
-            }
-
             const formDataToSend = new FormData();
-            formDataToSend.append('name', formData.name);
-            formDataToSend.append('studentClass', formData.studentClass);
-            formDataToSend.append('section', formData.section);
-            formDataToSend.append('gender', formData.gender);
-            formDataToSend.append('email', formData.email);
-            formDataToSend.append('password', formData.password);
-            formDataToSend.append('phone', formData.phone);
-            formDataToSend.append('address', formData.address);
-            formDataToSend.append('role', formData.role);
+            Object.entries(formData).forEach(([key, value]) => {
+                if (value !== null && value !== undefined) {
+                    formDataToSend.append(key, value);
+                }
+            });
 
-            if (formData.profilePic) {
-                formDataToSend.append('file', formData.profilePic);
-            }
+            console.log('Submitting form data:', Object.fromEntries(formDataToSend.entries()));
 
             const resultAction = await dispatch(createAccount(formDataToSend));
 
             if (createAccount.fulfilled.match(resultAction)) {
+                console.log('Student registered successfully:', resultAction.payload);
                 setMessage({ text: 'Student registered successfully!', type: 'success' });
-                // Reset form
-                setFormData({
-                    name: '',
-                    studentClass: '',
-                    section: '',
-                    gender: '',
-                    email: '',
-                    password: '',
-                    phone: '',
-                    address: '',
-                    profilePic: null,
-                    role: 'student'
-                });
-                setPreviewImage(null);
+                resetForm();
             } else {
-                throw new Error(resultAction.error.message || 'Registration failed');
+                const error = resultAction.error || new Error('Registration failed');
+                console.error('Registration failed:', error);
+                throw error;
             }
         } catch (error) {
             console.error('Registration error:', error);
@@ -122,6 +131,8 @@ function AddStudent() {
     const togglePasswordVisibility = () => {
         setPasswordVisible(!passwordVisible);
     };
+
+
 
     return (
         <SuperAdminLayout>
