@@ -2,9 +2,9 @@ import asyncHandler from 'express-async-handler';
 import bcrypt from 'bcryptjs';
 import fs from 'fs/promises';
 import { generateJWTToken } from '../utils/jwtUtils.js';
-import User from '../models/user.model.js';
 import { v2 as cloudinary } from 'cloudinary';
 import AppError from '../middlewares/error.middleware.js';
+import { User, Point } from '../models/index.model.js';
 
 // Cookie options
 const cookieOptions = {
@@ -164,5 +164,41 @@ export const logoutUser = asyncHandler(async (_req, res) => {
     res.status(200).json({
         success: true,
         message: 'User logged out successfully',
+    });
+});
+
+
+export const getLoggedInUserDetails = asyncHandler(async (req, res, next) => {
+    // Check if the user is authenticated
+    if (!req.user || !req.user.id) {
+        return next(new AppError('User not authenticated', 401));
+    }
+
+    console.log("Logged-in user ID:", req.user.id);
+
+    // Fetch the user along with points information using the correct associations
+    const user = await User.findOne({
+        where: { id: req.user.id },
+        attributes: { exclude: ['password'] }, // Exclude sensitive data
+        include: [
+            {
+                model: Point, // Correct reference to the Point model
+                as: 'points', // Alias used in User.hasOne(Point)
+                attributes: ['base_points', 'deduce_points', 'bonus_points', 'total_points'], // Points data to fetch
+            }
+        ],
+    });
+    console.log(user);
+
+    // If the user does not exist, send an error
+    if (!user) {
+        return next(new AppError('User not found', 404));
+    }
+
+    // Send the response with user details and points
+    res.status(200).json({
+        success: true,
+        message: 'User details with points',
+        user, // Will include points information under `points` key
     });
 });

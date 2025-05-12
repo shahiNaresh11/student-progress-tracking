@@ -1,12 +1,15 @@
 import express from 'express';
 import userRoutes from './routes/user.routes.js';
+import teacherRoutes from './routes/teacher.routes.js'
 import cors from 'cors'
+import cookieParser from 'cookie-parser';
 // import AppError from './middlewares/error.middleware.js';
 
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser())
 app.use(
     cors({
         origin: 'http://localhost:5173',
@@ -16,6 +19,7 @@ app.use(
 
 // Routes
 app.use('/api/v1/user', userRoutes);
+app.use('/api/v1/teacher', teacherRoutes);
 
 // Basic route
 app.get('/', (req, res) => {

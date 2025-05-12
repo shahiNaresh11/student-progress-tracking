@@ -2,7 +2,7 @@ import { Award, Clock, Plus, User } from "lucide-react";
 import AdminLayout from "../../Layouts/AdminLayout";
 import { useNavigate } from "react-router-dom";
 
-function Class() {
+function TeacherDashboard() {
     const navigate = useNavigate();
 
     const classes = [
@@ -59,4 +59,4 @@ function Class() {
 
 
 }
-export default Class;
+export default TeacherDashboard;

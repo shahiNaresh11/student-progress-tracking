@@ -16,5 +16,5 @@ export const initSuperAdminUser = async () => {
         },
     });
 
-    console.log(created ? '✅ SuperAdmin created' : 'ℹ️ SuperAdmin already exists');
+    console.log(created ? ' SuperAdmin created' : 'SuperAdmin already exists');
 };

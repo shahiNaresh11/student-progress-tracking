@@ -3,6 +3,7 @@ import app from './app.js';
 import sequelize from './configs/dbConfig.js';
 import { initSuperAdminUser } from './utils/initSuperAdmin.js';
 import { v2 as cloudinary } from 'cloudinary';
+import './models/index.model.js';
 
 dotenv.config();
 

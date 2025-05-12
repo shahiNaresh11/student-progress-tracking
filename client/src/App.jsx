@@ -6,13 +6,13 @@ import HomeLayouts from './Layouts/HomeLayouts'
 import Dashboard from './pages/Student/Dashboard'
 import AssignmentPage from './pages/AssignmentPage'
 import RecordsPage from './pages/RecordsPage'
-import Class from './pages/AdminDa/Class'
 import StudentList from './pages/AdminDa/StudentList'
 import ActionPage from './pages/AdminDa/ActionPage'
 import NotFound from './pages/NotFound'
 import SuperDashboard from './pages/superAdmin/SuperDashboard'
 import AddStudent from './pages/superAdmin/AddStudent'
 import AddTeacher from './pages/superAdmin/AddTeacher'
+import TeacherDashboard from './pages/AdminDa/TeacherDashboard'
 
 function App() {
   return (
@@ -29,7 +29,7 @@ function App() {
       </Route>
 
 
-      <Route path="/profile" element={<Class />} />
+      <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
       <Route path="/admin/classes/:id/students" element={<StudentList />} />
       <Route path="/add-points/:studentId" element={<ActionPage />} />
 

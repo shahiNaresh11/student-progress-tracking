@@ -3,14 +3,17 @@ import { Link, useNavigate, Outlet } from 'react-router-dom';
 import { LogOut, GraduationCap, User, Clock, Book, Bell, Menu, ChevronLeft } from 'lucide-react';
 
 import { logout } from '../Redux/Slices/AuthSlice';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 function HomeLayouts() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    const [name, setName] = useState('John Doe');
+
+
     const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    const student = useSelector(state => state.auth.data);
 
     const toggleSidebar = () => {
         setSidebarOpen(!sidebarOpen);
@@ -49,13 +52,16 @@ function HomeLayouts() {
                                 className="flex items-center space-x-3 px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
                                 onClick={() => { }}
                             >
-                                <div className="w-8 h-8 bg-indigo-300 rounded-full flex items-center justify-center text-indigo-800 font-bold">
-                                    {name
-                                        .split(' ')
-                                        .map((n) => n[0])
-                                        .join('')}
+                                <div className="w-8 h-8 bg-indigo-300 rounded-full flex items-center justify-center pb-2 text-indigo-800 font-bold text-xl">
+                                    {student?.user?.name
+                                        ? student?.user?.name
+                                            .split(' ')
+                                            .map((n) => n[0])
+                                            .join('')
+                                        : '?'}
                                 </div>
-                                <span className="font-medium">{name}</span>
+                                <span className="font-medium">{`${student?.user?.class}-${student?.user?.section}`}</span>
+
                             </button>
 
                             {/* Notification Button */}

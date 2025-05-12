@@ -1,9 +1,8 @@
 import { DataTypes, Model } from 'sequelize';
-import dotenv from 'dotenv';
 import sequelize from '../configs/dbConfig.js';
 
 // Load environment variables from .env file
-dotenv.config();
+
 
 class User extends Model { }
 
@@ -39,7 +38,7 @@ User.init(
             type: DataTypes.STRING,
             allowNull: true,
         },
-        img: {
+        profilePic: {
             type: DataTypes.JSONB,
             allowNull: true,
             defaultValue: {
@@ -70,6 +69,7 @@ User.init(
         timestamps: true,
     }
 );
+
 
 await sequelize.sync();
 
