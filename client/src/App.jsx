@@ -34,9 +34,12 @@ function App() {
       <Route path="/add-points/:studentId" element={<ActionPage />} />
 
 
+
       <Route path="/superAdmin" element={<SuperDashboard />} />
       <Route path="/addstudent" element={<AddStudent />} />
       <Route path="/addteacher" element={<AddTeacher />} />
+
+
 
 
       <Route path="*" element={<NotFound />} />

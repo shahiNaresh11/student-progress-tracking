@@ -8,9 +8,15 @@ const initialState = {
   isLoggedIn: localStorage.getItem("isLoggedIn") === "true",
   role: localStorage.getItem("role") || "",
   data: (() => {
-    const data = localStorage.getItem("data");
-    return data ? JSON.parse(data) : {};
+    try {
+      const data = localStorage.getItem("data");
+      return data ? JSON.parse(data) : {}; // Safely handle null/undefined
+    } catch (error) {
+      console.error("Failed to parse localStorage data:", error);
+      return {}; // Fallback if JSON is invalid
+    }
   })(),
+  attendanceData: null,
 };
 
 // Async thunk for creating new account (by superadmin)
@@ -101,6 +107,23 @@ export const getUserData = createAsyncThunk(
   }
 );
 
+export const getStudentAttendance = createAsyncThunk("user/attendance",
+  async () => {
+    try {
+      const response = await axiosInstance.get("/user/attendance");
+      return response.data;
+
+
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to fetch user data");
+      throw error;
+
+
+    }
+  }
+
+);
+
 // Auth slice
 const authSlice = createSlice({
   name: "auth",
@@ -158,9 +181,23 @@ const authSlice = createSlice({
       .addCase(getUserData.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-      });
+      })
 
-    // Note: No extra reducer for createAccount as we don't want to modify auth state
+      .addCase(getStudentAttendance.pending, (state, action) => {
+        state.loading = true;
+      })
+
+      .addCase(getStudentAttendance.fulfilled, (state, action) => {
+        state.loading = false;
+        state.attendanceData = action.payload;
+
+      })
+      .addCase(getStudentAttendance.rejected, (state, action) => {
+        state.loading = false; // ✅ Fix typo here
+        state.attendanceError = action.payload || "Failed to fetch attendance! from extrareducer";
+      })
+
+
   },
 });
 

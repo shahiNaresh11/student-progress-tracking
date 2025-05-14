@@ -4,7 +4,7 @@ import fs from 'fs/promises';
 import { generateJWTToken } from '../utils/jwtUtils.js';
 import { v2 as cloudinary } from 'cloudinary';
 import AppError from '../middlewares/error.middleware.js';
-import { User, Point } from '../models/index.model.js';
+import { User, Point, Attendance, sequelize } from '../models/index.model.js';
 
 // Cookie options
 const cookieOptions = {
@@ -175,30 +175,88 @@ export const getLoggedInUserDetails = asyncHandler(async (req, res, next) => {
     }
 
     console.log("Logged-in user ID:", req.user.id);
-
-    // Fetch the user along with points information using the correct associations
     const user = await User.findOne({
         where: { id: req.user.id },
-        attributes: { exclude: ['password'] }, // Exclude sensitive data
+        attributes: { exclude: ['password'] },
         include: [
             {
-                model: Point, // Correct reference to the Point model
-                as: 'points', // Alias used in User.hasOne(Point)
-                attributes: ['base_points', 'deduce_points', 'bonus_points', 'total_points'], // Points data to fetch
+                model: Point,
+                as: 'points',
+                attributes: ['base_points', 'deduce_points', 'bonus_points', 'total_points'],
             }
         ],
     });
     console.log(user);
 
-    // If the user does not exist, send an error
+
     if (!user) {
         return next(new AppError('User not found', 404));
     }
 
-    // Send the response with user details and points
+
     res.status(200).json({
         success: true,
         message: 'User details with points',
-        user, // Will include points information under `points` key
+        user,
+    });
+});
+
+
+
+
+export const getStudentAttendance = asyncHandler(async (req, res, next) => {
+    const studentId = req.user?.id; // ✅ Use ID from the JWT (via middleware)
+
+    if (!studentId) {
+        return next(new AppError('User not authenticated', 401));
+    }
+
+    // 1. Find student basic info (without attendances yet)
+    const student = await User.findOne({
+        where: { id: studentId, role: 'student' },
+        attributes: ['id', 'name', 'email', 'class', 'section'],
+    });
+
+    if (!student) {
+        return res.status(404).json({
+            success: false,
+            message: 'Student not found',
+        });
+    }
+
+    // 2. Aggregate attendance counts
+    const attendanceCounts = await Attendance.findAll({
+        where: { student_id: studentId },
+        attributes: [
+            'status',
+            [sequelize.fn('COUNT', sequelize.col('status')), 'count']
+        ],
+        group: ['status'],
+    });
+
+    const summary = {
+        present: 0,
+        absent: 0,
+        late: 0,
+    };
+
+    attendanceCounts.forEach(record => {
+        summary[record.status] = parseInt(record.get('count'));
+    });
+
+    // 3. Fetch all attendance records (optional, for listing on frontend)
+    const attendances = await Attendance.findAll({
+        where: { student_id: studentId },
+        attributes: ['id', 'date', 'status', 'remarks', 'createdAt'],
+        order: [['date', 'DESC']],
+    });
+
+    // 4. Respond
+    res.status(200).json({
+        success: true,
+        message: `Attendance records for ${student.name}`,
+        student,
+        summary,
+        attendances,
     });
 });

@@ -4,20 +4,20 @@ import { useNavigate } from 'react-router-dom';
 import { BookOpen, Clock, Award, AlertTriangle } from 'lucide-react';
 import { BsPersonCircle } from "react-icons/bs";
 import Action from '../../Components/Action';
-import { getUserData } from '../../Redux/Slices/AuthSlice';
+import { getStudentAttendance, getUserData } from '../../Redux/Slices/AuthSlice';
 
 console.log("Dashboard component loaded");
 
 
 const Dashboard = () => {
-  const navigate = useNavigate();
+
   const dispatch = useDispatch();
   const student = useSelector(state => state.auth.data);
-  // const totalPoints = useSelector((state) => state.auth.data.points?.total_points);
+  const attendance = useSelector(state => state.auth.attendanceData)
 
+  console.log("this is", student);
+  console.log("this is the attendence", attendance);
 
-
-  console.log("this", student);
 
 
 
@@ -28,10 +28,22 @@ const Dashboard = () => {
     } catch (error) {
       console.error("Failed to fetch user data:", error);
     }
+
   }
+  async function studentAttendance() {
+    try {
+      console.log("user attendance api called");
+      await dispatch(getStudentAttendance());
+    } catch (error) {
+      console.error("Failed to fetch user data:", error);
+    }
+  }
+
+
   useEffect(() => {
     console.log("hello vaii")
     studentData();
+    studentAttendance();
 
 
 
@@ -137,15 +149,15 @@ const Dashboard = () => {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <p className="text-gray-600">Present</p>
-                  <p className="font-semibold text-green-600">{student.address}</p>
+                  <p className="font-semibold text-green-600">{attendance?.summary?.present??.0}</p>
                 </div>
                 <div className="flex justify-between items-center">
                   <p className="text-gray-600">Late</p>
-                  <p className="font-semibold text-yellow-600">{student.address}</p>
+                  <p className="font-semibold text-yellow-600">{attendance?.summary?.late??.0}</p>
                 </div>
                 <div className="flex justify-between items-center">
                   <p className="text-gray-600">Absent</p>
-                  <p className="font-semibold text-red-600">{student.address}</p>
+                  <p className="font-semibold text-red-600">{attendance?.summary?.absent??.0}</p>
                 </div>
               </div>
             </div>
