@@ -51,7 +51,7 @@ User.init(
             defaultValue: 'student',
         },
 
-        class: {
+        studentClass: {
             type: DataTypes.STRING,
             allowNull: true,
         },

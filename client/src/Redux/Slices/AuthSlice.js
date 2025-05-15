@@ -17,6 +17,8 @@ const initialState = {
     }
   })(),
   attendanceData: null,
+  activityData: null,
+
 };
 
 // Async thunk for creating new account (by superadmin)
@@ -57,6 +59,7 @@ export const createTeacherAccount = createAsyncThunk(
     }
   }
 );
+
 
 // Async thunk for login
 export const login = createAsyncThunk(
@@ -122,6 +125,39 @@ export const getStudentAttendance = createAsyncThunk("user/attendance",
     }
   }
 
+);
+
+export const getActivity = createAsyncThunk("user/activity",
+  async () => {
+    try {
+      const response = await axiosInstance.get("/user/activity");
+      console.log("actvity of user", response.data);
+      console.log("actvity of user 2", response);
+      return response.data;
+
+
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to fetch user activity");
+      throw error;
+
+    }
+  }
+);
+
+export const getAssignments = createAsyncThunk("user/assiginment",
+  async () => {
+    try {
+      const response = await axiosInstance.get("/user/assiginment");
+      console.log("actvity of assiginment", response.data);
+      return response.data;
+
+
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to fetch user activity");
+      throw error;
+
+    }
+  }
 );
 
 // Auth slice
@@ -193,8 +229,39 @@ const authSlice = createSlice({
 
       })
       .addCase(getStudentAttendance.rejected, (state, action) => {
-        state.loading = false; // ✅ Fix typo here
+        state.loading = false;
         state.attendanceError = action.payload || "Failed to fetch attendance! from extrareducer";
+      })
+
+
+      //for activity
+      .addCase(getActivity.pending, (state, action) => {
+        state.loading = true;
+      })
+
+      .addCase(getActivity.fulfilled, (state, action) => {
+        state.loading = false;
+        state.activityData = action.payload;
+
+      })
+      .addCase(getActivity.rejected, (state, action) => {
+        state.loading = false;
+        state.activityError = action.payload || "Failed to fetch actvity! from extrareducer";
+      })
+
+      // for Assiginment
+      .addCase(getAssignments.pending, (state, action) => {
+        state.loading = true;
+      })
+
+      .addCase(getAssignments.fulfilled, (state, action) => {
+        state.loading = false;
+        state.assiginmentData = action.payload;
+
+      })
+      .addCase(getAssignments.rejected, (state, action) => {
+        state.loading = false;
+        state.assiginmentError = action.payload || "Failed to fetch actvity! from extrareducer";
       })
 
 

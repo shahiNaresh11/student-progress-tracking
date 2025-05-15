@@ -60,7 +60,7 @@ function HomeLayouts() {
                                             .join('')
                                         : '?'}
                                 </div>
-                                <span className="font-medium">{`${student?.user?.class}-${student?.user?.section}`}</span>
+                                <span className="font-medium">{student?.user?.studentClass}</span>
 
                             </button>
 

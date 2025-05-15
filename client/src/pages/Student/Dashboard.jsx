@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { BookOpen, Clock, Award, AlertTriangle } from 'lucide-react';
 import { BsPersonCircle } from "react-icons/bs";
 import Action from '../../Components/Action';
-import { getStudentAttendance, getUserData } from '../../Redux/Slices/AuthSlice';
+import { getStudentAttendance, getUserData, getAssignments } from '../../Redux/Slices/AuthSlice';
+
 
 console.log("Dashboard component loaded");
 
@@ -14,14 +15,21 @@ const Dashboard = () => {
   const dispatch = useDispatch();
   const student = useSelector(state => state.auth.data);
   const attendance = useSelector(state => state.auth.attendanceData)
+  const assiginment = useSelector(state => state.auth.assiginmentData)
+
 
   console.log("this is", student);
   console.log("this is the attendence", attendance);
 
 
 
+  async function getAssiginment() {
+    await dispatch(getAssignments());
 
-  async function studentData() {
+
+  }
+
+  async function getstudentData() {
     try {
       console.log("user api called");
       await dispatch(getUserData());
@@ -30,7 +38,7 @@ const Dashboard = () => {
     }
 
   }
-  async function studentAttendance() {
+  async function getstudentAttendance() {
     try {
       console.log("user attendance api called");
       await dispatch(getStudentAttendance());
@@ -42,8 +50,10 @@ const Dashboard = () => {
 
   useEffect(() => {
     console.log("hello vaii")
-    studentData();
-    studentAttendance();
+    getstudentData();
+    getstudentAttendance();
+    getAssiginment();
+
 
 
 
@@ -96,7 +106,7 @@ const Dashboard = () => {
               <div className="bg-red-100 p-4 rounded-lg">
                 <div className="flex justify-between">
                   <AlertTriangle color="red" size={20} />
-                  <span className="text-red-600 font-bold">{student?.user?.points?.deduce_points}</span>
+                  <span className="text-red-600 font-bold">-{student?.user?.points?.deduce_points}</span>
                 </div>
                 <p className="text-red-600 mt-2">Total Deductions</p>
               </div>
@@ -127,15 +137,15 @@ const Dashboard = () => {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <p className="text-gray-600">Assignments Completed</p>
-                  <p className="font-semibold">{student?.name}</p>
+                  <p className="font-semibold">{assiginment?.summary?.total}/{assiginment?.summary?.submitted}</p>
                 </div>
                 <div className="flex justify-between items-center">
-                  <p className="text-gray-600">Current Grade</p>
-                  <p className="font-semibold">{student?.name}</p>
+                  <p className="text-gray-600">due</p>
+                  <p className="font-semibold">{assiginment?.summary?.late}</p>
                 </div>
                 <div className="flex justify-between items-center">
-                  <p className="text-gray-600">Class Rank</p>
-                  <p className="font-semibold">{student?.address}</p>
+                  <p className="text-gray-600">missed</p>
+                  <p className="font-semibold">{assiginment?.summary?.missed}</p>
                 </div>
               </div>
             </div>
@@ -149,15 +159,15 @@ const Dashboard = () => {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <p className="text-gray-600">Present</p>
-                  <p className="font-semibold text-green-600">{attendance?.summary?.present??.0}</p>
+                  <p className="font-semibold text-green-600">{attendance?.summary?.present ?? .0}</p>
                 </div>
                 <div className="flex justify-between items-center">
                   <p className="text-gray-600">Late</p>
-                  <p className="font-semibold text-yellow-600">{attendance?.summary?.late??.0}</p>
+                  <p className="font-semibold text-yellow-600">{attendance?.summary?.late ?? .0}</p>
                 </div>
                 <div className="flex justify-between items-center">
                   <p className="text-gray-600">Absent</p>
-                  <p className="font-semibold text-red-600">{attendance?.summary?.absent??.0}</p>
+                  <p className="font-semibold text-red-600">{attendance?.summary?.absent ?? .0}</p>
                 </div>
               </div>
             </div>

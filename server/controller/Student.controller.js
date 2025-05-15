@@ -4,7 +4,7 @@ import fs from 'fs/promises';
 import { generateJWTToken } from '../utils/jwtUtils.js';
 import { v2 as cloudinary } from 'cloudinary';
 import AppError from '../middlewares/error.middleware.js';
-import { User, Point, Attendance, sequelize } from '../models/index.model.js';
+import { User, Point, Attendance, sequelize, Activity, Assignment } from '../models/index.model.js';
 
 // Cookie options
 const cookieOptions = {
@@ -15,7 +15,7 @@ const cookieOptions = {
 };
 
 export const registerUser = asyncHandler(async (req, res, next) => {
-    console.log("📩 Register route hit");
+    console.log("Register route hit");
 
     // Log raw request content
     console.log("🧾 req.body:", req.body);
@@ -34,7 +34,7 @@ export const registerUser = asyncHandler(async (req, res, next) => {
     } = req.body;
 
     if (!name || !email || !password || !studentClass || !section || !gender) {
-        console.log("❌ Missing required fields");
+        console.log(" Missing required fields");
         return res.status(400).json({
             success: false,
             message: 'Please provide all required fields: name, email, password, class, section, and gender'
@@ -44,7 +44,7 @@ export const registerUser = asyncHandler(async (req, res, next) => {
     try {
         const userExists = await User.findOne({ where: { email } });
         if (userExists) {
-            console.log("⚠️ Email already registered:", email);
+            console.log(" Email already registered:", email);
             return res.status(409).json({
                 success: false,
                 message: 'Email already exists'
@@ -60,7 +60,7 @@ export const registerUser = asyncHandler(async (req, res, next) => {
 
         if (req.file) {
             try {
-                console.log("🖼️ Uploading image to Cloudinary...");
+                console.log(" Uploading image to Cloudinary...");
                 const result = await cloudinary.uploader.upload(req.file.path, {
                     folder: 'student_profiles',
                     width: 250,
@@ -76,7 +76,7 @@ export const registerUser = asyncHandler(async (req, res, next) => {
 
                 await fs.rm(req.file.path);
             } catch (error) {
-                console.error('❌ Image upload error:', error);
+                console.error(' Image upload error:', error);
             }
         }
 
@@ -103,7 +103,7 @@ export const registerUser = asyncHandler(async (req, res, next) => {
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
 
-        console.log("✅ User registered:", email);
+        console.log(" User registered:", email);
         res.status(201).json({
             success: true,
             message: 'Student registered successfully',
@@ -112,7 +112,7 @@ export const registerUser = asyncHandler(async (req, res, next) => {
         });
 
     } catch (error) {
-        console.error('❌ User creation error:', error);
+        console.error(' User creation error:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to register student',
@@ -214,7 +214,7 @@ export const getStudentAttendance = asyncHandler(async (req, res, next) => {
     // 1. Find student basic info (without attendances yet)
     const student = await User.findOne({
         where: { id: studentId, role: 'student' },
-        attributes: ['id', 'name', 'email', 'class', 'section'],
+        attributes: ['id', 'name', 'email', 'studentClass', 'section'],
     });
 
     if (!student) {
@@ -258,5 +258,61 @@ export const getStudentAttendance = asyncHandler(async (req, res, next) => {
         student,
         summary,
         attendances,
+    });
+});
+
+
+export const getStudentActivities = asyncHandler(async (req, res, next) => {
+    const studentId = req.user?.id;
+
+    if (!studentId) {
+        return next(new AppError('User not authenticated', 401));
+    }
+
+    // // Check if the student exists and is of role 'student'
+    // const student = await User.findOne({
+    //     where: { id: studentId, role: 'student' },
+    //     // attributes: ['id', 'name', 'email', 'student', 'section'],
+    // });
+
+    // if (!student) {
+    //     return next(new AppError('Student not found or not authorized', 404));
+    // }
+
+    // Get activity logs for the student
+    const activities = await Activity.findAll({
+        where: { student_id: studentId },
+        order: [['createdAt', 'DESC']],
+        // attributes: ['id', 'activity', 'description', 'createdAt'],
+    });
+
+    res.status(200).json({
+        success: true,
+        message: `Activity records for ID ${studentId}`,
+        activities,
+    });
+});
+
+export const getStudentAssignments = asyncHandler(async (req, res, next) => {
+    const studentId = req.user?.id;
+
+    const assignments = await Assignment.findAll({
+        where: { student_id: studentId },
+        attributes: ['id', 'title', 'status', 'dueDate', 'submittedAt'],
+        order: [['dueDate', 'DESC']],
+    });
+
+    const summary = {
+        total: assignments.length,
+        submitted: assignments.filter(a => a.status === 'submitted').length,
+        late: assignments.filter(a => a.status === 'late').length,
+        missed: assignments.filter(a => a.status === 'missed').length,
+    };
+
+    res.status(200).json({
+        success: true,
+        message: `Assignments summary for student ${studentId}`,
+        summary,
+        assignments,
     });
 });

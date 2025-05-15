@@ -113,6 +113,7 @@ function AddStudent() {
             console.log('Submitting form data:', Object.fromEntries(formDataToSend.entries()));
 
             const resultAction = await dispatch(createAccount(formDataToSend));
+            
 
             if (createAccount.fulfilled.match(resultAction)) {
                 console.log('Student registered successfully:', resultAction.payload);
@@ -209,7 +210,9 @@ function AddStudent() {
 
                         {/* Class */}
                         <div className="col-span-2 md:col-span-1">
-                            <label htmlFor="studentClass" className="block mb-2 font-medium text-gray-700">Class *</label>
+                            <label htmlFor="studentClass" className="block mb-2 font-medium text-gray-700">
+                                Class *
+                            </label>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <MdClass className="h-5 w-5 text-gray-400" />
@@ -223,12 +226,15 @@ function AddStudent() {
                                     required
                                 >
                                     <option value="">Select Class</option>
-                                    {[...Array(12)].map((_, i) => (
-                                        <option key={i + 1} value={i + 1}>Grade {i + 1}</option>
+                                    {["I", "II", "III", "IV", "V", "VI", "VII", "VIII"].map((roman, index) => (
+                                        <option key={index + 1} value={`BCA ${roman}`}>
+                                            BCA {roman}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
                         </div>
+
 
                         <div className="col-span-2 md:col-span-1">
                             <label className="block mb-2 font-medium text-gray-700">Section *</label>
