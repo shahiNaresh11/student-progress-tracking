@@ -4,7 +4,7 @@ import fs from 'fs/promises';
 import { generateJWTToken } from '../utils/jwtUtils.js';
 import { v2 as cloudinary } from 'cloudinary';
 import AppError from '../middlewares/error.middleware.js';
-import { User, Point, Attendance, sequelize, Activity, Assignment } from '../models/index.model.js';
+import { User, Point, Attendance, sequelize, Activity, Assignment, Class } from '../models/index.model.js';
 
 // Cookie options
 const cookieOptions = {
@@ -27,13 +27,13 @@ export const registerUser = asyncHandler(async (req, res, next) => {
         password,
         phone,
         address,
-        studentClass,
+        classId,
         section,
         gender,
         role,
     } = req.body;
 
-    if (!name || !email || !password || !studentClass || !section || !gender) {
+    if (!name || !email || !password || !classId || !section || !gender) {
         console.log(" Missing required fields");
         return res.status(400).json({
             success: false,
@@ -87,7 +87,7 @@ export const registerUser = asyncHandler(async (req, res, next) => {
             phone,
             address,
             role,
-            studentClass,
+            classId,
             section,
             gender,
             img,
@@ -183,6 +183,11 @@ export const getLoggedInUserDetails = asyncHandler(async (req, res, next) => {
                 model: Point,
                 as: 'points',
                 attributes: ['base_points', 'deduce_points', 'bonus_points', 'total_points'],
+            },
+            {
+                model: Class,
+                as: 'class',
+                attributes: ['id', 'className']
             }
         ],
     });
@@ -214,7 +219,7 @@ export const getStudentAttendance = asyncHandler(async (req, res, next) => {
     // 1. Find student basic info (without attendances yet)
     const student = await User.findOne({
         where: { id: studentId, role: 'student' },
-        attributes: ['id', 'name', 'email', 'studentClass', 'section'],
+        attributes: ['id', 'name', 'email', 'classId', 'section'],
     });
 
     if (!student) {

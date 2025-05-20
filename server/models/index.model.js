@@ -5,6 +5,8 @@ import Point from './points.model.js';
 import Attendance from './attendence.model.js';
 import Activity from './activity.model.js';
 import Assignment from './assignment.model.js';
+import Class from './class.model.js';
+
 
 // Setup associations after all models are imported
 User.hasOne(Point, {
@@ -47,5 +49,15 @@ Assignment.belongsTo(User, {
     as: 'student',
 });
 
+Class.hasMany(User, {
+    foreignKey: 'classId',
+    as: 'students',
+    onDelete: 'SET NULL',
+});
+User.belongsTo(Class, {
+    foreignKey: 'classId',
+    as: 'class',
+});
+
 // Export after associations are set
-export { sequelize, User, Point, Attendance, Activity, Assignment };
+export { sequelize, User, Point, Attendance, Activity, Assignment, Class };

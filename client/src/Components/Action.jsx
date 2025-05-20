@@ -43,7 +43,7 @@ function Action() {
                         {/* ✅ If you have points in API response */}
                         {act.points && (
                             <span className="text-green-600 font-medium">
-                                +{act?.points}
+                                {act?.points}
                             </span>
                         )}
                     </div>

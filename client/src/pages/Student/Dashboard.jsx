@@ -84,7 +84,7 @@ const Dashboard = () => {
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-gray-800">{student?.user?.name}</h2>
-                  <p className="text-gray-600">Student ID: {student.id}</p>
+                  <p className="text-gray-600">Student Id: {student?.user?.id}</p>
                 </div>
               </div>
               <div className="text-right">

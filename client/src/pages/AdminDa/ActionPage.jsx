@@ -18,24 +18,21 @@ function ActionPage() {
             { reason: "Homework not submitted", date: "April 5, 2025", points: "-15" },
             { reason: "Improper uniform", date: "March 28, 2025", points: "-5" },
             { reason: "Class disruption", date: "March 15, 2025", points: "-20" }
+        ],
+        attendanceRecords: [
+            { date: "April 15, 2025", status: "Present" },
+            { date: "April 14, 2025", status: "Present" },
+            { date: "April 13, 2025", status: "Late" },
+            { date: "April 12, 2025", status: "Absent" },
+            { date: "April 11, 2025", status: "Present" }
         ]
     });
 
-    // Activity logs
-    const [recentActivities, setRecentActivities] = useState([
-        {
-            reason: "Perfect attendance this week",
-            date: new Date(2025, 3, 15, 10, 30), // April 15, 2025
-            points: 25,
-            type: 'addition'
-        },
-        {
-            reason: "Late submission of assignment",
-            date: new Date(2025, 3, 14, 14, 15), // April 14, 2025
-            points: -10,
-            type: 'deduction'
-        }
-    ]);
+    // Attendance form state
+    const [attendanceStatus, setAttendanceStatus] = useState('present');
+    const [attendanceDate, setAttendanceDate] = useState(
+        new Date().toISOString().split('T')[0] // Current date in YYYY-MM-DD format
+    );
 
     // Action type state (add or deduct)
     const [actionType, setActionType] = useState('deduct');
@@ -62,18 +59,37 @@ function ActionPage() {
         { id: 5, label: "Outstanding achievement", points: "50" }
     ];
 
+    // Function to handle attendance submission
+    const handleAttendanceSubmit = () => {
+        const formattedDate = new Date(attendanceDate).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        // Capitalize first letter of status
+        const formattedStatus = attendanceStatus.charAt(0).toUpperCase() + attendanceStatus.slice(1);
+
+        // Add new attendance record
+        setStudent(prev => ({
+            ...prev,
+            attendanceRecords: [
+                { date: formattedDate, status: formattedStatus },
+                ...prev.attendanceRecords
+            ]
+        }));
+
+        // Optionally update points based on attendance
+        if (attendanceStatus === 'absent') {
+            handlePredefinedAction("-10", "Absent from class");
+        } else if (attendanceStatus === 'late') {
+            handlePredefinedAction("-5", "Late to class");
+        }
+    };
+
     // Function to handle predefined actions
     const handlePredefinedAction = (points, reason) => {
         const pointsValue = parseInt(points);
-        const newActivity = {
-            reason: reason,
-            date: new Date(),
-            points: pointsValue,
-            type: pointsValue > 0 ? 'addition' : 'deduction'
-        };
-
-        // Update recent activities
-        setRecentActivities(prev => [newActivity, ...prev]);
 
         // Update student points
         setStudent(prev => ({
@@ -101,16 +117,6 @@ function ActionPage() {
         if (!customAction || !customPoints) return;
 
         const pointsValue = isAddition ? Math.abs(parseInt(customPoints)) : -Math.abs(parseInt(customPoints));
-
-        const newActivity = {
-            reason: customAction,
-            date: new Date(),
-            points: pointsValue,
-            type: isAddition ? 'addition' : 'deduction'
-        };
-
-        // Update recent activities
-        setRecentActivities(prev => [newActivity, ...prev]);
 
         // Update student points
         setStudent(prev => ({
@@ -159,7 +165,7 @@ function ActionPage() {
     return (
         <AdminLayout>
             <div className="grid grid-cols-12 gap-6">
-                {/* Student Profile and Activities - Left Side */}
+                {/* Student Profile and Attendance - Left Side */}
                 <div className="col-span-12 lg:col-span-8 space-y-6">
                     <div className="bg-white rounded-xl shadow-sm border p-6">
                         <h2 className="text-2xl font-bold text-gray-800 mb-6">{student.name}</h2>
@@ -186,25 +192,85 @@ function ActionPage() {
                         </div>
                     </div>
 
+                    {/* Attendance Section (Replaces Recent Activities) */}
                     <div className="bg-white rounded-xl shadow-sm border p-6">
-                        <h3 className="text-lg font-semibold mb-4">Recent Activities (24h)</h3>
-                        <div className="space-y-4">
-                            {recentActivities.map((activity, index) => (
-                                <div key={index} className="flex items-center justify-between py-2 border-b last:border-0">
-                                    <div>
-                                        <p className="font-medium">{activity.reason}</p>
-                                        <p className="text-sm text-gray-500">
-                                            {formatDistanceToNow(activity.date, { addSuffix: true })}
-                                        </p>
-                                    </div>
-                                    <span className={`font-medium ${activity.type === 'addition' ? 'text-green-600' : 'text-red-600'
-                                        }`}>
-                                        {activity.type === 'addition' ? '+' : ''}{activity.points}
-                                    </span>
+                        <h3 className="text-lg font-semibold mb-4">Attendance</h3>
+
+                        {/* Attendance Form */}
+                        <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Date
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={attendanceDate}
+                                        onChange={(e) => setAttendanceDate(e.target.value)}
+                                        className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
                                 </div>
-                            ))}
-                            {recentActivities.length === 0 && (
-                                <p className="text-gray-500 text-center py-4">No activities in the last 24 hours</p>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Status
+                                    </label>
+                                    <select
+                                        value={attendanceStatus}
+                                        onChange={(e) => setAttendanceStatus(e.target.value)}
+                                        className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        <option value="present">Present</option>
+                                        <option value="absent">Absent</option>
+                                        <option value="late">Late</option>
+                                    </select>
+                                </div>
+                                <div className="flex items-end">
+                                    <button
+                                        onClick={handleAttendanceSubmit}
+                                        className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+                                    >
+                                        Record Attendance
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Attendance Records */}
+                        <div className="space-y-4">
+                            <h4 className="font-medium text-gray-700">Recent Attendance Records</h4>
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
+                                        <tr>
+                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Date
+                                            </th>
+                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Status
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                        {student.attendanceRecords.map((record, index) => (
+                                            <tr key={index}>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    {record.date}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${record.status === 'Present' ? 'bg-green-100 text-green-800' :
+                                                            record.status === 'Late' ? 'bg-yellow-100 text-yellow-800' :
+                                                                'bg-red-100 text-red-800'
+                                                        }`}>
+                                                        {record.status}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {student.attendanceRecords.length === 0 && (
+                                <p className="text-gray-500 text-center py-4">No attendance records found</p>
                             )}
                         </div>
                     </div>
@@ -317,7 +383,6 @@ function ActionPage() {
                 </div>
             </div>
         </AdminLayout>
-
     );
 }
 

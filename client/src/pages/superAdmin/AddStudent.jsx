@@ -1,16 +1,20 @@
-import { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { createAccount } from '../../Redux/Slices/AuthSlice';
 import SuperAdminLayout from '../../Layouts/SuperAdminLayout';
 import { FaUser, FaEnvelope, FaLock, FaPhone, FaMapMarkerAlt, FaSpinner } from 'react-icons/fa';
 import { HiEye, HiEyeOff } from 'react-icons/hi';
 import { MdPersonOutline, MdOutlineCameraAlt, MdClass, MdRadioButtonChecked } from 'react-icons/md';
+import { getAllClass } from '../../Redux/Slices/TeacherSlice';
 
 function AddStudent() {
+
+    const data = useSelector(state => state.teacher.classes);
+    console.log("classes", data);
     const dispatch = useDispatch();
     const [formData, setFormData] = useState({
         name: '',
-        studentClass: '',
+        classId: '',
         section: '',
         gender: '',
         rollNum: '',
@@ -34,6 +38,8 @@ function AddStudent() {
             [name]: value
         }));
     };
+
+
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
@@ -72,7 +78,7 @@ function AddStudent() {
     const resetForm = () => {
         setFormData({
             name: '',
-            studentClass: '',
+            classId: '',
             section: '',
             gender: '',
             rollNum: '',
@@ -113,7 +119,7 @@ function AddStudent() {
             console.log('Submitting form data:', Object.fromEntries(formDataToSend.entries()));
 
             const resultAction = await dispatch(createAccount(formDataToSend));
-            
+
 
             if (createAccount.fulfilled.match(resultAction)) {
                 console.log('Student registered successfully:', resultAction.payload);
@@ -138,6 +144,21 @@ function AddStudent() {
     const togglePasswordVisibility = () => {
         setPasswordVisible(!passwordVisible);
     };
+
+
+    async function getClass() {
+        await dispatch(getAllClass());
+
+
+    }
+
+    useEffect(() => {
+        getClass();
+
+
+
+
+    }, [])
 
     return (
         <SuperAdminLayout>
@@ -210,7 +231,7 @@ function AddStudent() {
 
                         {/* Class */}
                         <div className="col-span-2 md:col-span-1">
-                            <label htmlFor="studentClass" className="block mb-2 font-medium text-gray-700">
+                            <label htmlFor="classId" className="block mb-2 font-medium text-gray-700">
                                 Class *
                             </label>
                             <div className="relative">
@@ -218,22 +239,23 @@ function AddStudent() {
                                     <MdClass className="h-5 w-5 text-gray-400" />
                                 </div>
                                 <select
-                                    id="studentClass"
-                                    name="studentClass"
-                                    value={formData.studentClass}
+                                    id="classId"
+                                    name="classId"
+                                    value={formData.classId}
                                     onChange={handleChange}
                                     className="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 appearance-none"
                                     required
                                 >
                                     <option value="">Select Class</option>
-                                    {["I", "II", "III", "IV", "V", "VI", "VII", "VIII"].map((roman, index) => (
-                                        <option key={index + 1} value={`BCA ${roman}`}>
-                                            BCA {roman}
+                                    {data?.data?.map(cls => (
+                                        <option key={cls.id} value={cls.id}>
+                                            {cls.className.trim()}
                                         </option>
                                     ))}
                                 </select>
                             </div>
                         </div>
+
 
 
                         <div className="col-span-2 md:col-span-1">
@@ -274,10 +296,6 @@ function AddStudent() {
                                 />
                             </div>
                         </div>
-
-
-
-
 
                         {/* Gender */}
                         <div className="col-span-2">

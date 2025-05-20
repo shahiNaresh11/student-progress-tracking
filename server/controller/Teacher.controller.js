@@ -4,6 +4,7 @@ import fs from 'fs/promises';
 import User from "../models/user.model.js";
 import { v2 as Cloudinary } from "cloudinary";
 import jwt from 'jsonwebtoken'; // Make sure to install and import jwt
+import { Class } from "../models/index.model.js"
 
 export const registerTeacher = asyncHandler(async (req, res, next) => {
     console.log("Register teacher route hit");
@@ -71,7 +72,7 @@ export const registerTeacher = asyncHandler(async (req, res, next) => {
             } catch (uploadError) {
                 console.error('Image upload error:', uploadError);
                 // Clean up temp file even if upload fails
-                await fs.unlink(req.file.path).catch(unlinkError => 
+                await fs.unlink(req.file.path).catch(unlinkError =>
                     console.error('Failed to delete temp file:', unlinkError)
                 );
                 return res.status(500).json({
@@ -96,8 +97,8 @@ export const registerTeacher = asyncHandler(async (req, res, next) => {
 
         // Generate JWT token
         const token = jwt.sign(
-            { id: user.id, role: user.role }, 
-            process.env.JWT_SECRET, 
+            { id: user.id, role: user.role },
+            process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EXPIRE || '7d' }
         );
 
@@ -127,7 +128,7 @@ export const registerTeacher = asyncHandler(async (req, res, next) => {
         console.error('User creation error:', error);
         // Clean up file if it exists and wasn't processed
         if (req.file) {
-            await fs.unlink(req.file.path).catch(unlinkError => 
+            await fs.unlink(req.file.path).catch(unlinkError =>
                 console.error('Failed to delete temp file:', unlinkError)
             );
         }
@@ -138,3 +139,54 @@ export const registerTeacher = asyncHandler(async (req, res, next) => {
         });
     }
 });
+
+// Create a new class
+export const createClass = async (req, res) => {
+    try {
+        const { className } = req.body;
+
+        // Validation
+        if (!className) {
+            return res.status(400).json({ message: "Class name is required." });
+        }
+
+        // Create the class
+        const newClass = await Class.create({ className });
+
+        return res.status(201).json({
+            message: "Class created successfully!",
+            data: newClass,
+        });
+    } catch (error) {
+        console.error("Error creating class:", error);
+        return res.status(500).json({
+            message: "Something went wrong while creating the class.",
+        });
+    }
+};
+
+
+
+
+
+
+export const getAllClasses = async (req, res) => {
+    try {
+        const classes = await Class.findAll({
+            order: [['createdAt', 'DESC']], // optional: sorts latest first
+        });
+
+        res.status(200).json({
+            success: true,
+            message: 'All classes retrieved successfully',
+            data: classes,
+        });
+    } catch (error) {
+        console.error('Error fetching classes:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch classes',
+            error: error.message,
+        });
+    }
+};

@@ -13,6 +13,7 @@ import SuperDashboard from './pages/superAdmin/SuperDashboard'
 import AddStudent from './pages/superAdmin/AddStudent'
 import AddTeacher from './pages/superAdmin/AddTeacher'
 import TeacherDashboard from './pages/AdminDa/TeacherDashboard'
+import CreateClass from './Components/CreateClass'
 
 function App() {
   return (
@@ -32,6 +33,8 @@ function App() {
       <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
       <Route path="/admin/classes/:id/students" element={<StudentList />} />
       <Route path="/add-points/:studentId" element={<ActionPage />} />
+      <Route path="/admin/classes/create" element={<CreateClass />} />
+
 
 
 

@@ -21,7 +21,10 @@ function TeacherDashboard() {
             <div className="space-y-6">
                 <div className="flex justify-between items-center mb-8">
                     <h2 className="text-2xl font-bold text-gray-800">Class Overview</h2>
-                    <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    <button
+                        onClick={() => navigate("/admin/classes/create")}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
                         <Plus className="w-5 h-5" />
                         Add New Class
                     </button>

@@ -51,13 +51,22 @@ User.init(
             defaultValue: 'student',
         },
 
-        studentClass: {
+        classId: {
             type: DataTypes.STRING,
             allowNull: true,
         },
         section: {
             type: DataTypes.STRING,
             allowNull: true,
+        },
+        classId: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: {
+                model: 'classes',
+                key: 'id',
+            },
+            onDelete: 'SET NULL',
         },
 
 
