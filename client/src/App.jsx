@@ -31,8 +31,8 @@ function App() {
 
 
       <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
-      <Route path="/admin/classes/:id/students" element={<StudentList />} />
-      <Route path="/add-points/:studentId" element={<ActionPage />} />
+      <Route path="/students/:id" element={<StudentList />} />
+      <Route path="/add-points/:id" element={<ActionPage />} />
       <Route path="/admin/classes/create" element={<CreateClass />} />
 
 

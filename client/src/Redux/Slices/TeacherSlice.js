@@ -2,6 +2,13 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../../Helpers/axiousInstance';
 import { toast } from 'react-hot-toast';
 
+const initialState = {
+    classes: [],
+    students: [],
+    loading: false,
+    error: null,
+}
+
 // Async thunk to create a class
 export const createClass = createAsyncThunk(
     "teacher/createClass",
@@ -34,13 +41,44 @@ export const getAllClass = createAsyncThunk(
     }
 );
 
+export const getAllStudentsByClassId = createAsyncThunk(
+    'student/getAllStudentsByClassId',
+    async (classId, { rejectWithValue }) => {
+        try {
+            console.log("Class ID from front-end:", classId);
+            const res = await axiosInstance.get(`teacher/getAllStudent/${classId}`);
+            toast.success(res?.data?.message || "Students fetched successfully!");
+            return res.data;
+        } catch (error) {
+            const message = error?.response?.data?.message || "Failed to fetch students";
+            toast.error(message);
+            return rejectWithValue(message);
+        }
+    }
+);
+
+// Async thunk to mark attendance
+export const markAttendance = createAsyncThunk(
+    "teacher/markAttendance",
+    async (attendanceData, { rejectWithValue }) => {
+        console.log("attendence data", attendanceData);
+        try {
+            const res = await axiosInstance.post("/teacher/mark-attendance", { attendance: attendanceData });
+            console.log("res of attendece", res);
+            toast.success(res?.data?.message || "Attendance marked successfully!");
+            return res.data;
+        } catch (error) {
+            const message = error?.response?.data?.message || "Failed to mark attendance";
+            toast.error(message);
+            return rejectWithValue(message);
+        }
+    }
+);
+
 const teacherSlice = createSlice({
     name: 'teacher',
-    initialState: {
-        classes: [],
-        loading: false,
-        error: null,
-    },
+    initialState,
+
     reducers: {},
     extraReducers: (builder) => {
         builder
@@ -50,7 +88,7 @@ const teacherSlice = createSlice({
                 state.error = null;
             })
             .addCase(createClass.fulfilled, (state, action) => {
-                state.loading = false;
+                state.loading = false; a
                 state.classes.push(action.payload);
             })
             .addCase(createClass.rejected, (state, action) => {
@@ -65,12 +103,45 @@ const teacherSlice = createSlice({
             })
             .addCase(getAllClass.fulfilled, (state, action) => {
                 state.loading = false;
-                state.classes = action.payload; // adapt if API differs
+                state.classes = action.payload.data; // ✅ only assign actual class array
             })
+
             .addCase(getAllClass.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload || action.error.message;
+            })
+
+
+            //getstudetnbyclassId
+            .addCase(getAllStudentsByClassId.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(getAllStudentsByClassId.fulfilled, (state, action) => {
+                state.loading = false;
+                state.students = action.payload.data; // data contains student array
+            })
+            .addCase(getAllStudentsByClassId.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload || action.error.message;
+            })
+
+            // markAttendance handlers
+            .addCase(markAttendance.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(markAttendance.fulfilled, (state, action) => {
+                state.loading = false;
+                state.attendance = action.payload;
+
+            })
+            .addCase(markAttendance.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload || action.error.message;
             });
+
+
     },
 });
 

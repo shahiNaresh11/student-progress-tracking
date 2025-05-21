@@ -1,4 +1,3 @@
-// models/attendance.model.js
 import { DataTypes, Model } from 'sequelize';
 import sequelize from '../configs/dbConfig.js';
 
@@ -12,6 +11,10 @@ Attendance.init(
             primaryKey: true,
         },
         student_id: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+        },
+        class_id: {
             type: DataTypes.INTEGER,
             allowNull: false,
         },
@@ -36,11 +39,10 @@ Attendance.init(
         indexes: [
             {
                 unique: true,
-                fields: ['student_id', 'date'], // Prevent duplicate entries per student per day
+                fields: ['student_id', 'class_id', 'date'],
             }
         ]
     }
 );
 
-await sequelize.sync();
 export default Attendance;

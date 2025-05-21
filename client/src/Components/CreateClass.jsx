@@ -17,7 +17,7 @@ function CreateClass() {
 
             // Check if the class was successfully created
             if (createClass.fulfilled.match(result)) {
-                navigate("/admin/dashboard");
+                navigate("/teacher-dashboard");
             }
         } catch (error) {
             console.error("Failed to create class:", error);

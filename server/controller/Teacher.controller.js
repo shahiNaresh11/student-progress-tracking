@@ -4,7 +4,8 @@ import fs from 'fs/promises';
 import User from "../models/user.model.js";
 import { v2 as Cloudinary } from "cloudinary";
 import jwt from 'jsonwebtoken'; // Make sure to install and import jwt
-import { Class } from "../models/index.model.js"
+import { Class, Point, Attendance } from "../models/index.model.js"
+
 
 export const registerTeacher = asyncHandler(async (req, res, next) => {
     console.log("Register teacher route hit");
@@ -188,5 +189,79 @@ export const getAllClasses = async (req, res) => {
             message: 'Failed to fetch classes',
             error: error.message,
         });
+    }
+};
+
+
+export const getAllStudnet = async (req, res) => {
+    const { classId } = req.params;
+    console.log("class id display from back", classId)
+
+
+    try {
+        const students = await User.findAll({
+            where: {
+                classId: classId,
+                role: 'student', // Ensures only students are returned
+            },
+            attributes: ['id', 'name', 'email', 'phone', 'classId', 'section'],
+            include: [
+                {
+                    model: Point,
+                    as: 'points',
+                    attributes: ['base_points', 'deduce_points', 'bonus_points', 'total_points'],
+                }
+            ]
+        });
+
+        return res.status(200).json({
+            success: true,
+            count: students.length,
+            data: students,
+        });
+
+    } catch (error) {
+        console.error('Error fetching students by classId:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal Server Error',
+        });
+    }
+};
+
+export const markAttendance = async (req, res) => {
+    try {
+        const attendanceArray = req.body.attendance;
+        if (!Array.isArray(attendanceArray) || attendanceArray.length === 0) {
+            return res.status(400).json({ message: "Attendance data is required and should be an array." });
+        }
+
+        // Process each attendance entry
+        const results = [];
+        for (const record of attendanceArray) {
+            const { studentId, classId, status, date } = record;
+
+            if (!studentId || !classId || !status || !date) {
+                return res.status(400).json({ message: "Missing required fields in attendance record." });
+            }
+
+            // Upsert: create new or update existing attendance record for student, class, date
+            const [attendance, created] = await Attendance.upsert(
+                {
+                    student_id: studentId,
+                    class_id: classId,
+                    date,
+                    status,
+                },
+                { returning: true }
+            );
+
+            results.push(attendance);
+        }
+
+        return res.status(200).json({ message: "Attendance marked successfully.", data: results });
+    } catch (error) {
+        console.error("Error marking attendance:", error);
+        return res.status(500).json({ message: "Internal server error." });
     }
 };
