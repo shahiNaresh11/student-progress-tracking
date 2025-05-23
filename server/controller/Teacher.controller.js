@@ -4,7 +4,7 @@ import fs from 'fs/promises';
 import User from "../models/user.model.js";
 import { v2 as Cloudinary } from "cloudinary";
 import jwt from 'jsonwebtoken'; // Make sure to install and import jwt
-import { Class, Point, Attendance } from "../models/index.model.js"
+import { Class, Point, Attendance, Activity } from "../models/index.model.js"
 
 
 export const registerTeacher = asyncHandler(async (req, res, next) => {
@@ -204,7 +204,7 @@ export const getAllStudnet = async (req, res) => {
                 classId: classId,
                 role: 'student', // Ensures only students are returned
             },
-            attributes: ['id', 'name', 'email', 'phone', 'classId', 'section'],
+            attributes: ['id', 'name', 'email', 'phone', 'classId', 'section', 'profilePic'],
             include: [
                 {
                     model: Point,
@@ -265,3 +265,40 @@ export const markAttendance = async (req, res) => {
         return res.status(500).json({ message: "Internal server error." });
     }
 };
+
+
+
+export const createActivity = asyncHandler(async (req, res) => {
+    const { studentId, classId, activity, points } = req.body;
+
+    // Validate inputs
+    if (!studentId || !classId || !activity || points === undefined) {
+        return res.status(400).json({
+            success: false,
+            message: "Missing required fields: studentId, classId, activity, points"
+        });
+    }
+
+    try {
+        const newActivity = await Activity.create({
+            student_id: studentId,  // Assuming your Activity model has student_id field FK
+            class_id: classId,       // You need to add class_id field in your model if not exists
+            activity,
+            points,
+            date: new Date().toISOString().split('T')[0], // store just YYYY-MM-DD part
+        });
+
+        return res.status(201).json({
+            success: true,
+            message: "Activity recorded successfully",
+            data: newActivity,
+        });
+    } catch (error) {
+        console.error("Error creating activity:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to record activity",
+            error: error.message,
+        });
+    }
+});

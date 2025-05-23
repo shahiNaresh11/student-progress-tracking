@@ -11,6 +11,7 @@ function StudentList() {
     const dispatch = useDispatch();
 
     const classInfo = location.state?.classInfo || {};
+    console.log("student of stdentlist", classInfo);
     const { students = [], loading, error } = useSelector((state) => state.teacher);
 
     const id = classInfo.id;
@@ -22,8 +23,8 @@ function StudentList() {
         }
     }, [id]);
 
-    const handleAddClick = (studentId) => {
-        navigate(`/add-points/${studentId}`);
+    const handleAddClick = (student) => {
+        navigate(`/add-points/${student.id}`, { state: { student } });
     };
 
     const handleSelect = (studentId) => {
@@ -164,7 +165,7 @@ function StudentList() {
                                                         <div className="flex items-center justify-end space-x-2">
                                                             <div className="bg-gray-100 rounded-lg flex shadow-sm">
                                                                 <button
-                                                                    onClick={() => handleAddClick(studentId)}
+                                                                    onClick={() => handleAddClick(student)}
                                                                     className="px-3 py-1 text-green-600 hover:bg-green-50 rounded-l-lg border border-gray-300 text-sm font-medium"
                                                                 >
                                                                     +

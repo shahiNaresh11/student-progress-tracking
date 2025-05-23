@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 const initialState = {
     classes: [],
     students: [],
+    activities: [],
     loading: false,
     error: null,
 }
@@ -75,6 +76,21 @@ export const markAttendance = createAsyncThunk(
     }
 );
 
+export const createActivity = createAsyncThunk(
+    'activity/createActivity',
+    async (activityData, { rejectWithValue }) => {
+        try {
+            const res = await axiosInstance.post('/teacher/createActivity', activityData);
+            toast.success(res?.data?.message || 'Activity recorded successfully!');
+            return res.data;
+        } catch (error) {
+            const message = error?.response?.data?.message || 'Failed to record activity';
+            toast.error(message);
+            return rejectWithValue(message);
+        }
+    }
+);
+
 const teacherSlice = createSlice({
     name: 'teacher',
     initialState,
@@ -139,9 +155,20 @@ const teacherSlice = createSlice({
             .addCase(markAttendance.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload || action.error.message;
-            });
+            })
 
-
+            .addCase(createActivity.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(createActivity.fulfilled, (state, action) => {
+                state.loading = false;
+                state.activities.push(action.payload);
+            })
+            .addCase(createActivity.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload || action.error.message;
+            })
     },
 });
 
