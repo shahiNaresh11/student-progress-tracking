@@ -131,8 +131,10 @@ export const getActivity = createAsyncThunk("user/activity",
   async () => {
     try {
       const response = await axiosInstance.get("/user/activity");
-      console.log("actvity of user", response.data);
-      console.log("actvity of user 2", response);
+      toast.success("Fetch activityData sucessfully");
+
+      // console.log("actvity of user", response.data);
+      // console.log("actvity of user 2", response);
       return response.data;
 
 

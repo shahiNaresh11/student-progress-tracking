@@ -1,12 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import AdminLayout from '../../Layouts/AdminLayout';
 import { useLocation } from 'react-router-dom';
+import { createActivity } from '../../Redux/Slices/TeacherSlice';
+import { useDispatch, useSelector } from 'react-redux';
 
 function ActionPage() {
+    const dispatch = useDispatch();
     const location = useLocation();
-    const studentData = location.state?.student || {};
 
-    // Initialize student state, but monthlyDeductions won't change locally now
+    const studentData = location.state?.student || {};
+    console.log("this is student data", studentData);
+
+    const activities = useSelector(state => state.teacher.activities) || [];
+
+    console.log("this is activity data from redux", activities);
+
     const [student, setStudent] = useState({ ...studentData, monthlyDeductions: [], status: 'Good Standing' });
     const [actionType, setActionType] = useState('deduct');
     const [customAction, setCustomAction] = useState('');
@@ -28,30 +37,97 @@ function ActionPage() {
         { id: 5, label: "Outstanding achievement", points: 5 }
     ];
 
-    // Stub: Click handler for predefined quick actions - no state update
-    const handlePredefinedAction = (points, reason) => {
-        // TODO: Integrate API call here to save action to backend
-        console.log(`Action clicked: ${reason} (${points} points)`);
+    const handlePredefinedAction = (points, activity) => {
+        if (!student?.id) return;
+
+        toast((t) => (
+            <div className="text-center text-lg leading-relaxed">
+                <p>
+                    Are you sure you want to apply <b>{activity}</b> ({points > 0 ? '+' : ''}{points} points)?
+                </p>
+                <div className="mt-4 flex justify-center gap-4">
+                    <button
+                        onClick={() => {
+                            const activityData = {
+                                studentId: student.id,
+                                points,
+                                activity,
+                            };
+                            dispatch(createActivity(activityData));
+                            toast.dismiss(t.id);
+                            toast.success('Action saved successfully!');
+                        }}
+                        className="px-6 py-2 bg-green-600 text-white rounded-md font-semibold hover:bg-green-700 transition duration-200"
+                    >
+                        Yes
+                    </button>
+                    <button
+                        onClick={() => toast.dismiss(t.id)}
+                        className="px-6 py-2 bg-gray-300 text-gray-800 rounded-md font-semibold hover:bg-gray-400 transition duration-200"
+                    >
+                        No
+                    </button>
+                </div>
+            </div>
+        ), { duration: 8000 });
     };
 
-    // Stub: Click handler for custom actions - no state update
     const handleCustomAction = (isAddition) => {
-        if (!customAction || !customPoints) return;
+        if (!customAction || !customPoints || !student?.id) return;
 
-        // TODO: Integrate API call here to save custom action to backend
-        console.log(`Custom Action: ${customAction}, Points: ${customPoints}, Is Addition: ${isAddition}`);
+        const points = isAddition ? parseInt(customPoints) : -parseInt(customPoints);
 
-        // Clear input fields after submission
-        setCustomAction('');
-        setCustomPoints('');
+        toast((t) => (
+            <div className="text-center text-lg leading-relaxed">
+                <p>
+                    Are you sure you want to apply <b>{customAction}</b> ({points > 0 ? '+' : ''}{points} points)?
+                </p>
+                <div className="mt-4 flex justify-center gap-4">
+                    <button
+                        onClick={() => {
+                            const activityData = {
+                                studentId: student.id,
+                                points,
+                                activity: customAction,
+                            };
+                            dispatch(createActivity(activityData));
+                            toast.dismiss(t.id);
+                            toast.success('Custom action saved!');
+                            setCustomAction('');
+                            setCustomPoints('');
+                        }}
+                        className="px-6 py-2 bg-green-600 text-white rounded-md font-semibold hover:bg-green-700 transition duration-200"
+                    >
+                        Yes
+                    </button>
+                    <button
+                        onClick={() => toast.dismiss(t.id)}
+                        className="px-6 py-2 bg-gray-300 text-gray-800 rounded-md font-semibold hover:bg-gray-400 transition duration-200"
+                    >
+                        No
+                    </button>
+                </div>
+            </div>
+        ), { duration: 8000 });
     };
 
-    // Status update logic is retained but it will only update if student.total_points changes externally
     useEffect(() => {
+        if (!student.points || typeof student.points.total_points !== "number") return;
+
+        const pts = student.points.total_points;
         let newStatus = "Probation";
-        if (student.total_points >= 100) newStatus = "Excellent";
-        else if (student.total_points >= 80) newStatus = "Excellent";
-        else if (student.total_points >= 70) newStatus = "";
+
+        if (pts >= 100) {
+            newStatus = "Outstanding";
+        } else if (pts >= 80 && pts < 100) {
+            newStatus = "Excellent";
+        } else if (pts >= 70 && pts < 80) {
+            newStatus = "Good Standing";
+        } else if (pts >= 50 && pts < 70) {
+            newStatus = "Warning";
+        } else if (pts < 50) {
+            newStatus = "Probation";
+        }
 
         if (newStatus !== student.status) {
             setStudent(prev => ({
@@ -59,21 +135,28 @@ function ActionPage() {
                 status: newStatus
             }));
         }
-    }, [student.total_points]);
+    }, [student.points?.total_points]);
 
-    // Filter recent activities — these won't update now since no actions add to monthlyDeductions
-    const last24HoursActivities = student.monthlyDeductions.filter(entry => {
-        const now = new Date();
-        const diff = (now - new Date(entry.timestamp)) / (1000 * 60 * 60);
-        return diff <= 24;
-    });
+    // Filter recent activities from Redux - last 24 hours
+    const recentActivities = activities
+        .map(item => item.data) // extract inner data object
+        .filter(activity => {
+            if (!activity) return false;
+            if (activity.student_id !== student.id) return false;  // <-- Filter by current student
+            const now = new Date();
+            const activityTime = new Date(activity.timestamp || activity.date);
+            const diffHours = (now - activityTime) / (1000 * 60 * 60);
+            return diffHours <= 24;
+        });
+
+
 
     return (
         <AdminLayout>
             <div className="grid grid-cols-12 gap-6">
                 <div className="col-span-12 lg:col-span-8 space-y-6">
                     <div className="bg-white rounded-xl shadow-sm border p-6">
-                        <div className="flex flex-col  mb-6">
+                        <div className="flex flex-col mb-6">
                             <img
                                 src={student.profilePic}
                                 alt={`${student.name}'s profile`}
@@ -84,16 +167,15 @@ function ActionPage() {
 
                         <div className="grid grid-cols-2 gap-6">
                             <div className="space-y-3">
-                                <p className="text-gray-600">Student Id: {student.id}</p>
-                                <p className="text-gray-600">Email: {student.email}</p>
-                                <p className="text-gray-600">Phone: {student.phone}</p>
+                                <p><span className="font-bold">Student Id:</span> {student.id}</p>
+                                <p><span className="font-bold">Email:</span> {student.email}</p>
+                                <p><span className="font-bold">Phone:</span> {student.phone}</p>
                             </div>
                             <div className="space-y-3">
+                                <span className="font-bold">Current Points:</span> <span className="font-bold text-xl">{student?.points?.total_points}</span>
+
                                 <p className="text-gray-600">
-                                    Current Points: <span className="font-bold text-xl">{student.total_points}</span>
-                                </p>
-                                <p className="text-gray-600">
-                                    Status:
+                                    <span className="font-bold">Status:</span>
                                     <span className={`ml-2 px-2 py-1 rounded-full text-sm ${student.status === 'Excellent' ? 'bg-green-100 text-green-800' :
                                         student.status === 'Good Standing' ? 'bg-blue-100 text-blue-800' :
                                             student.status === 'Warning' ? 'bg-yellow-100 text-yellow-800' :
@@ -106,45 +188,31 @@ function ActionPage() {
                         </div>
                     </div>
 
-                    {/* Recent Activity */}
+                    {/* Recent Activity from Redux */}
                     <div className="bg-white rounded-xl shadow-sm border p-6">
                         <h3 className="text-lg font-semibold mb-4">Recent Activity (Last 24 Hours)</h3>
-                        {last24HoursActivities.length > 0 ? (
+                        {recentActivities.length > 0 ? (
                             <div className="space-y-4">
-                                {last24HoursActivities.map((deduction, index) => (
+                                {recentActivities.map((activity, index) => (
                                     <div key={index} className="flex items-center justify-between py-2 border-b last:border-0">
                                         <div>
-                                            <p className="font-medium">{deduction.reason}</p>
-                                            <p className="text-sm text-gray-500">{deduction.date}</p>
+                                            <p className="font-medium">{activity.activity}</p>
+                                            <p className="text-sm text-gray-500">{new Date(activity.timestamp || activity.date).toLocaleString()}</p>
                                         </div>
-                                        <span className={`font-medium ${deduction.points > 0 ? 'text-green-600' : 'text-red-600'}`}>{deduction.points}</span>
+                                        <span className={`font-medium ${activity.points > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                            {activity.points > 0 ? `+${activity.points}` : activity.points}
+                                        </span>
                                     </div>
                                 ))}
                             </div>
                         ) : (
                             <p className="text-gray-500">No recent activity in the last 24 hours.</p>
                         )}
+
+
                     </div>
 
-                    {/* Monthly Activities */}
-                    <div className="bg-white rounded-xl shadow-sm border p-6">
-                        <h3 className="text-lg font-semibold mb-4">Monthly Activities</h3>
-                        <div className="space-y-4">
-                            {student.monthlyDeductions.length > 0 ? (
-                                student.monthlyDeductions.map((deduction, index) => (
-                                    <div key={index} className="flex items-center justify-between py-2 border-b last:border-0">
-                                        <div>
-                                            <p className="font-medium">{deduction.reason}</p>
-                                            <p className="text-sm text-gray-500">{deduction.date}</p>
-                                        </div>
-                                        <span className={`font-medium ${deduction.points > 0 ? 'text-green-600' : 'text-red-600'}`}>{deduction.points}</span>
-                                    </div>
-                                ))
-                            ) : (
-                                <p className="text-gray-500">No monthly activities recorded.</p>
-                            )}
-                        </div>
-                    </div>
+
                 </div>
 
                 {/* Quick Actions Panel */}
@@ -173,50 +241,42 @@ function ActionPage() {
                                 <button
                                     key={action.id}
                                     onClick={() => handlePredefinedAction(action.points, action.label)}
-                                    className={`w-full flex items-center justify-between p-3 border rounded-lg transition-colors ${actionType === 'deduct' ? 'hover:bg-red-50 hover:border-red-200' : 'hover:bg-green-50 hover:border-green-200'}`}
+                                    className={`w-full flex items-center justify-between p-3 border rounded-lg transition-colors ${actionType === 'deduct' ? 'hover:bg-red-50' : 'hover:bg-green-50'}`}
                                 >
                                     <span>{action.label}</span>
-                                    <span className={actionType === 'deduct' ? 'text-red-600' : 'text-green-600'}>
-                                        {action.points > 0 ? `+${action.points}` : `${action.points}`}
+                                    <span className={`${action.points > 0 ? 'text-green-600' : 'text-red-600'} font-bold`}>
+                                        {action.points > 0 ? `+${action.points}` : action.points}
                                     </span>
                                 </button>
                             ))}
                         </div>
-                    </div>
 
-                    <div className="bg-white rounded-xl shadow-sm border p-6">
-                        <h3 className="text-lg font-semibold mb-4">Custom Action</h3>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
-                                <input
-                                    type="text"
-                                    value={customAction}
-                                    onChange={(e) => setCustomAction(e.target.value)}
-                                    className="w-full p-2 border rounded-lg"
-                                    placeholder="Enter reason..."
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Points</label>
-                                <input
-                                    type="number"
-                                    value={customPoints}
-                                    onChange={(e) => setCustomPoints(e.target.value)}
-                                    className="w-full p-2 border rounded-lg"
-                                    placeholder="Enter points..."
-                                />
-                            </div>
-                            <div className="flex gap-2">
+                        <div className="mt-6">
+                            <h4 className="mb-2 font-semibold">Custom Action</h4>
+                            <input
+                                type="text"
+                                placeholder="Activity Description"
+                                className="w-full mb-2 p-2 border rounded"
+                                value={customAction}
+                                onChange={(e) => setCustomAction(e.target.value)}
+                            />
+                            <input
+                                type="number"
+                                placeholder="Points"
+                                className="w-full mb-2 p-2 border rounded"
+                                value={customPoints}
+                                onChange={(e) => setCustomPoints(e.target.value)}
+                            />
+                            <div className="flex gap-4">
                                 <button
                                     onClick={() => handleCustomAction(false)}
-                                    className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700"
+                                    className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md font-semibold hover:bg-red-700 transition"
                                 >
                                     Deduct Points
                                 </button>
                                 <button
                                     onClick={() => handleCustomAction(true)}
-                                    className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
+                                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md font-semibold hover:bg-green-700 transition"
                                 >
                                     Add Points
                                 </button>
@@ -224,8 +284,8 @@ function ActionPage() {
                         </div>
                     </div>
                 </div>
-            </div >
-        </AdminLayout >
+            </div>
+        </AdminLayout>
     );
 }
 

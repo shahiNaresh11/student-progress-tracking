@@ -79,8 +79,10 @@ export const markAttendance = createAsyncThunk(
 export const createActivity = createAsyncThunk(
     'activity/createActivity',
     async (activityData, { rejectWithValue }) => {
+        console.log("upper activity", activityData)
         try {
             const res = await axiosInstance.post('/teacher/createActivity', activityData);
+            console.log("lower activity", activityData)
             toast.success(res?.data?.message || 'Activity recorded successfully!');
             return res.data;
         } catch (error) {
@@ -104,7 +106,7 @@ const teacherSlice = createSlice({
                 state.error = null;
             })
             .addCase(createClass.fulfilled, (state, action) => {
-                state.loading = false; a
+                state.loading = false;
                 state.classes.push(action.payload);
             })
             .addCase(createClass.rejected, (state, action) => {
@@ -161,10 +163,15 @@ const teacherSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
+
             .addCase(createActivity.fulfilled, (state, action) => {
-                state.loading = false;
-                state.activities.push(action.payload);
+                state.loading = false; // good to set loading false here too
+                state.activities.unshift({
+                    ...action.payload,
+                    timestamp: new Date().toISOString()
+                });
             })
+
             .addCase(createActivity.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload || action.error.message;

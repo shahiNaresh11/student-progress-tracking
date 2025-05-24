@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import AdminLayout from "../../Layouts/AdminLayout";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllStudentsByClassId, markAttendance } from "../../Redux/Slices/TeacherSlice";
+import toast from "react-hot-toast";
 
 
 function StudentList() {
@@ -35,25 +36,44 @@ function StudentList() {
         }
     };
 
-    const handleMarkAttendance = async (status) => {
+    const handleMarkAttendance = (status) => {
         if (selectedStudents.length === 0) {
-            alert("Please select at least one student.");
+            toast.error("Please select at least one student.");
             return;
         }
 
-        const attendanceData = selectedStudents.map(studentId => ({
-            studentId,
-            classId: id,
-            status,
-            date: new Date().toISOString().split("T")[0], // optional
-        }));
+        toast((t) => (
+            <div className="text-center text-lg">
+                <p className="mb-4 font-semibold">Are you sure?</p>
+                <div className="flex justify-center gap-4">
+                    <button
+                        onClick={async () => {
+                            const attendanceData = selectedStudents.map(studentId => ({
+                                studentId,
+                                classId: id,
+                                status,
+                                date: new Date().toISOString().split("T")[0],
+                            }));
 
-        // Dispatch your slice when ready
-        await dispatch(markAttendance(attendanceData));
-        console.log("Marking attendance:", attendanceData);
-        alert(`Marked ${status} for ${selectedStudents.length} student(s).`);
-
-        setSelectedStudents([]);
+                            await dispatch(markAttendance(attendanceData));
+                            toast.dismiss(t.id);
+                            setSelectedStudents([]);
+                        }}
+                        className="px-5 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+                    >
+                        Yes
+                    </button>
+                    <button
+                        onClick={() => toast.dismiss(t.id)}
+                        className="px-5 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition"
+                    >
+                        No
+                    </button>
+                </div>
+            </div>
+        ), {
+            duration: 8000,
+        });
     };
 
     return (
@@ -170,13 +190,16 @@ function StudentList() {
                                                                 >
                                                                     +
                                                                 </button>
-                                                                <button className="px-3 py-1 text-red-600 hover:bg-red-50 border-t border-b border-r border-gray-300 text-sm font-medium">
+
+                                                                <button
+                                                                    onClick={() => handleAddClick(student)}
+                                                                    className="px-3 py-1 text-red-600 hover:bg-red-50 border-t border-b border-r border-gray-300 text-sm font-medium">
                                                                     -
                                                                 </button>
                                                             </div>
-                                                            <button className="px-3 py-1 bg-blue-600 text-white rounded border text-sm">
+                                                            {/* <button className="px-3 py-1 bg-blue-600 text-white rounded border text-sm">
                                                                 View
-                                                            </button>
+                                                            </button> */}
                                                         </div>
                                                     </td>
                                                 </tr>

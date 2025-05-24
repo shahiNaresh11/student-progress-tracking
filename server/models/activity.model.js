@@ -2,7 +2,7 @@
 import { DataTypes, Model } from 'sequelize';
 import sequelize from '../configs/dbConfig.js';
 
-class Activity extends Model {}
+class Activity extends Model { }
 
 Activity.init(
     {

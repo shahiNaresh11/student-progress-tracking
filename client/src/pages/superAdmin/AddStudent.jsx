@@ -146,19 +146,6 @@ function AddStudent() {
     };
 
 
-    async function getClass() {
-        await dispatch(getAllClass());
-
-
-    }
-
-    useEffect(() => {
-        getClass();
-
-
-
-
-    }, [])
 
     return (
         <SuperAdminLayout>

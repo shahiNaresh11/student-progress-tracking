@@ -13,12 +13,9 @@ function CreateClass() {
         e.preventDefault();
 
         try {
-            const result = await dispatch(createClass({ className }));
+            await dispatch(createClass({ className }));
+            navigate("/teacher-dashboard");
 
-            // Check if the class was successfully created
-            if (createClass.fulfilled.match(result)) {
-                navigate("/teacher-dashboard");
-            }
         } catch (error) {
             console.error("Failed to create class:", error);
             // Optional: Show error message to user

@@ -14,6 +14,7 @@ function HomeLayouts() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const student = useSelector(state => state.auth.data);
+    console.log("from the navbar", student)
 
     const toggleSidebar = () => {
         setSidebarOpen(!sidebarOpen);
@@ -60,17 +61,17 @@ function HomeLayouts() {
                                             .join('')
                                         : '?'}
                                 </div>
-                                <span className="font-medium">{student?.user?.studentClass}</span>
+                                <span className="font-medium">{student?.user?.class?.className}</span>
 
                             </button>
 
                             {/* Notification Button */}
-                            <button className="flex items-center justify-center w-11 h-11 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors relative">
+                            {/* <button className="flex items-center justify-center w-11 h-11 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors relative">
                                 <Bell size={18} />
                                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
                                     3
                                 </span>
-                            </button>
+                            </button> */}
 
                             {/* Logout Button */}
                             <button

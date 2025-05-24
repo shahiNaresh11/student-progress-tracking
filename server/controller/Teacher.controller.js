@@ -269,10 +269,10 @@ export const markAttendance = async (req, res) => {
 
 
 export const createActivity = asyncHandler(async (req, res) => {
-    const { studentId, classId, activity, points } = req.body;
+    const { studentId, activity, points } = req.body;
 
     // Validate inputs
-    if (!studentId || !classId || !activity || points === undefined) {
+    if (!studentId || !activity || points === undefined) {
         return res.status(400).json({
             success: false,
             message: "Missing required fields: studentId, classId, activity, points"
@@ -281,8 +281,7 @@ export const createActivity = asyncHandler(async (req, res) => {
 
     try {
         const newActivity = await Activity.create({
-            student_id: studentId,  // Assuming your Activity model has student_id field FK
-            class_id: classId,       // You need to add class_id field in your model if not exists
+            student_id: studentId,  // Assuming your Activity model has student_id field FK     
             activity,
             points,
             date: new Date().toISOString().split('T')[0], // store just YYYY-MM-DD part

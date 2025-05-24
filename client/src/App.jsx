@@ -1,6 +1,7 @@
 import './App.css'
 import { Routes, Route } from 'react-router-dom'
 
+
 import Login from './pages/Login'
 import HomeLayouts from './Layouts/HomeLayouts'
 import Dashboard from './pages/Student/Dashboard'
@@ -14,39 +15,44 @@ import AddStudent from './pages/superAdmin/AddStudent'
 import AddTeacher from './pages/superAdmin/AddTeacher'
 import TeacherDashboard from './pages/AdminDa/TeacherDashboard'
 import CreateClass from './Components/CreateClass'
+import ToastProvider from './Components/ToastProvider';
 
 function App() {
   return (
-    <Routes>
-      {/* Public Route */}
-      <Route path="/" element={<Login />} />
+    <>
+      <ToastProvider />
 
-      {/* Protected Routes with Layout */}
-      <Route element={<HomeLayouts />}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/assignment" element={<AssignmentPage />} />
-        <Route path="/records" element={<RecordsPage />} />
+      <Routes>
+        {/* Public Route */}
+        <Route path="/" element={<Login />} />
 
-      </Route>
+        {/* Protected Routes with Layout */}
+        <Route element={<HomeLayouts />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/assignment" element={<AssignmentPage />} />
+          <Route path="/records" element={<RecordsPage />} />
 
-
-      <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
-      <Route path="/students/:id" element={<StudentList />} />
-      <Route path="/add-points/:id" element={<ActionPage />} />
-      <Route path="/admin/classes/create" element={<CreateClass />} />
+        </Route>
 
 
-
-
-      <Route path="/superAdmin" element={<SuperDashboard />} />
-      <Route path="/addstudent" element={<AddStudent />} />
-      <Route path="/addteacher" element={<AddTeacher />} />
+        <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
+        <Route path="/students/:id" element={<StudentList />} />
+        <Route path="/add-points/:id" element={<ActionPage />} />
+        <Route path="/admin/classes/create" element={<CreateClass />} />
 
 
 
 
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+        <Route path="/superAdmin" element={<SuperDashboard />} />
+        <Route path="/addstudent" element={<AddStudent />} />
+        <Route path="/addteacher" element={<AddTeacher />} />
+
+
+
+
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
   )
 }
 

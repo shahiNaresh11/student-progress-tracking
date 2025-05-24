@@ -35,10 +35,7 @@ function Login() {
             const response = await dispatch(login(loginData));
 
             if (response.payload?.success) {
-                toast.success("Login successful!");
-
                 const userRole = response.payload.user.role;
-
                 const normalizedRole = userRole?.toLowerCase();
 
                 if (normalizedRole === "superadmin") {
@@ -49,8 +46,6 @@ function Login() {
                     navigate("/teacher-dashboard");
                 }
 
-            } else {
-                toast.error(response.payload?.message || "Login failed. Please check your credentials.");
             }
         } catch (error) {
             toast.error("Something went wrong. Try again later.");
@@ -116,15 +111,7 @@ function Login() {
                         </div>
                     </div>
 
-                    <div className="flex items-center animate-fade-in delay-400">
-                        <input
-                            type="checkbox"
-                            id="remember-me"
-                            name="remember-me"
-                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                        />
-                        <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">Remember me</label>
-                    </div>
+
                 </div>
 
                 <button
@@ -135,11 +122,7 @@ function Login() {
                     <FaArrowRight />
                 </button>
 
-                <div className="text-center animate-fade-in delay-600">
-                    <a href="#" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
-                        Forgot your password?
-                    </a>
-                </div>
+
             </form>
         </div>
     );

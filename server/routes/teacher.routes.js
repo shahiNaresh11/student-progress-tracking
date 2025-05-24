@@ -14,7 +14,7 @@ router.get('/getAllClass', getAllClasses);
 router.post('/createClass', createClass);
 router.get('/getAllStudent/:classId', getAllStudnet);
 router.post('/mark-attendance', markAttendance);
-router.post('/activity', createActivity);
+router.post('/createActivity', createActivity);
 
 
 
