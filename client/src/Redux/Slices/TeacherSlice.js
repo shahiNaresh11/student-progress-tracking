@@ -159,6 +159,9 @@ const teacherSlice = createSlice({
                 state.error = action.payload || action.error.message;
             })
 
+
+
+            // activity createdsss
             .addCase(createActivity.pending, (state) => {
                 state.loading = true;
                 state.error = null;

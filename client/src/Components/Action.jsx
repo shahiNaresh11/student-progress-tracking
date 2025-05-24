@@ -6,11 +6,11 @@ import { useEffect } from "react";
 function Action() {
     const dispatch = useDispatch();
 
-    const activity = useSelector(state => state.auth.activityData?.activities); // ✅ Get data from Redux state
-    console.log(" Activities from API:", activity);
+    const activity = useSelector(state => state.auth.activityData?.activities);
+    console.log("Activities from API:", activity);
 
     useEffect(() => {
-        dispatch(getActivity()); // ✅ Dispatch the action as a function
+        dispatch(getActivity());
     }, [dispatch]);
 
     // Icon helper based on type
@@ -32,7 +32,12 @@ function Action() {
 
             {activity?.length > 0 ? (
                 activity.map((act, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 border-b">
+                    <div
+                        key={index}
+                        className="flex items-center justify-between p-3 border-b"
+                    // Optional row color highlight:
+                    // className={`flex items-center justify-between p-3 border-b ${act.points >= 0 ? 'bg-green-50' : 'bg-red-50'}`}
+                    >
                         <div className="flex items-center">
                             {getActivityIcon(act?.activity)}
                             <div className="ml-3">
@@ -40,10 +45,9 @@ function Action() {
                                 <p className="text-sm text-gray-500">{new Date(act?.createdAt).toLocaleDateString()}</p>
                             </div>
                         </div>
-                        {/* ✅ If you have points in API response */}
-                        {act.points && (
-                            <span className="text-green-600 font-medium">
-                                {act?.points}
+                        {typeof act.points === 'number' && (
+                            <span className={`font-medium ${act.points >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {act.points > 0 ? `+${act.points}` : act.points}
                             </span>
                         )}
                     </div>

@@ -120,14 +120,14 @@ function HomeLayouts() {
                             {sidebarOpen && <span className="font-medium">Records</span>}
                         </Link>
 
-                        <Link
+                        {/* <Link
                             to="/profile"
                             className={`flex items-center ${sidebarOpen ? 'space-x-3' : 'justify-center'
                                 } w-full px-4 py-3 text-left text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 rounded-lg transition-colors`}
                         >
                             <User size={18} />
                             {sidebarOpen && <span className="font-medium">Profile</span>}
-                        </Link>
+                        </Link> */}
                     </nav>
                 </aside>
 

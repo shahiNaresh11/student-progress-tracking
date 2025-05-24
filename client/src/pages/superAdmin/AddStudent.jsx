@@ -10,7 +10,7 @@ import { getAllClass } from '../../Redux/Slices/TeacherSlice';
 function AddStudent() {
 
     const data = useSelector(state => state.teacher.classes);
-    console.log("classes", data);
+    console.log("classes from add", data);
     const dispatch = useDispatch();
     const [formData, setFormData] = useState({
         name: '',
@@ -52,9 +52,9 @@ function AddStudent() {
             return;
         }
 
-        if (file.size > 2 * 1024 * 1024) { // 2MB limit
+        if (file.size > 8 * 1024 * 1024) { // 2MB limit
             console.error('File too large:', file.size);
-            setMessage({ text: 'Image size should be less than 2MB', type: 'error' });
+            setMessage({ text: 'Image size should be less than 8MB', type: 'error' });
             return;
         }
 
@@ -146,6 +146,14 @@ function AddStudent() {
     };
 
 
+    async function studentClass() {
+        await dispatch(getAllClass());
+
+
+    }
+    useEffect(() => {
+        studentClass();
+    }, [])
 
     return (
         <SuperAdminLayout>
@@ -234,12 +242,13 @@ function AddStudent() {
                                     required
                                 >
                                     <option value="">Select Class</option>
-                                    {data?.data?.map(cls => (
+                                    {data?.map(cls => (
                                         <option key={cls.id} value={cls.id}>
                                             {cls.className.trim()}
                                         </option>
                                     ))}
                                 </select>
+
                             </div>
                         </div>
 
