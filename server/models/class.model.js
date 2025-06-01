@@ -21,7 +21,7 @@ Class.init(
         sequelize,
         modelName: 'Class',
         tableName: 'classes',
-        timestamps: true, // adds createdAt and updatedAt
+        timestamps: true, 
     }
 );
 

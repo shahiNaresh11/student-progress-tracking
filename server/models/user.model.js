@@ -51,10 +51,6 @@ User.init(
             defaultValue: 'student',
         },
 
-        classId: {
-            type: DataTypes.STRING,
-            allowNull: true,
-        },
         section: {
             type: DataTypes.STRING,
             allowNull: true,

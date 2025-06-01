@@ -5,7 +5,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { getAllStudentsByClassId, markAttendance } from "../../Redux/Slices/TeacherSlice";
 import toast from "react-hot-toast";
 
-
 function StudentList() {
     const location = useLocation();
     const navigate = useNavigate();
@@ -17,6 +16,7 @@ function StudentList() {
 
     const id = classInfo.id;
     const [selectedStudents, setSelectedStudents] = useState([]);
+    const [showAttendanceDropdown, setShowAttendanceDropdown] = useState(false);
 
     useEffect(() => {
         if (id) {
@@ -25,7 +25,7 @@ function StudentList() {
     }, [id]);
 
     const handleAddClick = (student) => {
-        navigate(`/add-points/${student.id}`, { state: { student } });
+        navigate(`/action/${student.id}`, { state: { student } });
     };
 
     const handleSelect = (studentId) => {
@@ -41,6 +41,8 @@ function StudentList() {
             toast.error("Please select at least one student.");
             return;
         }
+
+        setShowAttendanceDropdown(false); // Close dropdown
 
         toast((t) => (
             <div className="text-center text-lg">
@@ -91,28 +93,67 @@ function StudentList() {
                         </div>
                     </div>
 
-                    <div className="mt-6 flex justify-end space-x-2">
+                    <div className="mt-6 flex justify-end space-x-3">
                         <button
-                            onClick={() => handleMarkAttendance("present")}
-                            className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600"
+                            onClick={() => navigate('/actions', { state: { classInfo } })}
+                            className="px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
                         >
-                            Mark Present
-                        </button>
-                        <button
-                            onClick={() => handleMarkAttendance("late")}
-                            className="px-3 py-1 bg-yellow-500 text-white text-sm rounded hover:bg-yellow-600"
-                        >
-                            Mark Late
-                        </button>
-                        <button
-                            onClick={() => handleMarkAttendance("absent")}
-                            className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
-                        >
-                            Mark Absent
+                            Actions
                         </button>
 
+                        {/* Attendance Dropdown */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowAttendanceDropdown(!showAttendanceDropdown)}
+                                className="px-4 py-2 bg-indigo-500 text-white text-sm rounded-lg hover:bg-indigo-600 transition-colors flex items-center space-x-2"
+                            >
+                                <span>Attendance</span>
+                                <svg
+                                    className={`w-4 h-4 transition-transform ${showAttendanceDropdown ? 'rotate-180' : ''}`}
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+
+                            {showAttendanceDropdown && (
+                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-10">
+                                    <button
+                                        onClick={() => handleMarkAttendance("present")}
+                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 flex items-center space-x-2"
+                                    >
+                                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                        <span>Mark Present</span>
+                                    </button>
+                                    <button
+                                        onClick={() => handleMarkAttendance("late")}
+                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 flex items-center space-x-2"
+                                    >
+                                        <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                                        <span>Mark Late</span>
+                                    </button>
+                                    <button
+                                        onClick={() => handleMarkAttendance("absent")}
+                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 flex items-center space-x-2"
+                                    >
+                                        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                                        <span>Mark Absent</span>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
+                    {/* Selected Students Info */}
+                    {selectedStudents.length > 0 && (
+                        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <p className="text-sm text-blue-700">
+                                <span className="font-semibold">{selectedStudents.length}</span> student{selectedStudents.length !== 1 ? 's' : ''} selected
+                            </p>
+                        </div>
+                    )}
                 </div>
 
                 <div className="max-w-6xl mx-auto px-6 mt-8">
@@ -121,7 +162,19 @@ function StudentList() {
                             <table className="w-full table-auto">
                                 <thead>
                                     <tr className="bg-gray-50 text-left border-b">
-                                        <th className="px-6 py-4 text-sm font-semibold text-gray-600">Select</th>
+                                        <th className="px-6 py-4 text-sm font-semibold text-gray-600">
+                                            <input
+                                                type="checkbox"
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setSelectedStudents(students.map(s => s.id || s._id));
+                                                    } else {
+                                                        setSelectedStudents([]);
+                                                    }
+                                                }}
+                                                checked={selectedStudents.length === students.length && students.length > 0}
+                                            />
+                                        </th>
                                         <th className="px-6 py-4 text-sm font-semibold text-gray-600">Name</th>
                                         <th className="px-6 py-4 text-sm font-semibold text-gray-600">Email</th>
                                         <th className="px-6 py-4 text-sm font-semibold text-gray-600">Phone</th>
@@ -197,9 +250,6 @@ function StudentList() {
                                                                     -
                                                                 </button>
                                                             </div>
-                                                            {/* <button className="px-3 py-1 bg-blue-600 text-white rounded border text-sm">
-                                                                View
-                                                            </button> */}
                                                         </div>
                                                     </td>
                                                 </tr>

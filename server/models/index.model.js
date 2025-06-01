@@ -59,5 +59,5 @@ User.belongsTo(Class, {
     as: 'class',
 });
 
-// Export after associations are set
+
 export { sequelize, User, Point, Attendance, Activity, Assignment, Class };

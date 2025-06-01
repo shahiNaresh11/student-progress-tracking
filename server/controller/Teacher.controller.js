@@ -1,10 +1,9 @@
 import asyncHandler from "express-async-handler";
 import bcrypt from "bcryptjs";
 import fs from 'fs/promises';
-import User from "../models/user.model.js";
 import { v2 as Cloudinary } from "cloudinary";
 import jwt from 'jsonwebtoken'; // Make sure to install and import jwt
-import { Class, Point, Attendance, Activity } from "../models/index.model.js"
+import { Class, Point, Attendance, Activity, User } from "../models/index.model.js"
 
 
 export const registerTeacher = asyncHandler(async (req, res, next) => {
@@ -19,7 +18,7 @@ export const registerTeacher = asyncHandler(async (req, res, next) => {
         contactNumber, // Using contactNumber consistently
         address,
         gender,
-        role = 'teacher' // Default role if not provided
+        role = 'teacher' 
     } = req.body;
 
     // Validation
@@ -93,7 +92,7 @@ export const registerTeacher = asyncHandler(async (req, res, next) => {
             address,
             role,
             gender,
-            profilePic, // Use the profilePic object we created
+            profilePic, 
         });
 
         // Generate JWT token
@@ -173,14 +172,33 @@ export const createClass = async (req, res) => {
 
 export const getAllClasses = async (req, res) => {
     try {
+        // Fetch all classes
         const classes = await Class.findAll({
-            order: [['createdAt', 'DESC']], // optional: sorts latest first
+            order: [['createdAt', 'DESC']],
+            raw: true,
         });
+
+        // For each class, count the number of students
+        const classWithCounts = await Promise.all(
+            classes.map(async (cls) => {
+                const studentCount = await User.count({
+                    where: {
+                        classId: cls.id,
+                        role: 'student',
+                    },
+                });
+
+                return {
+                    ...cls,
+                    studentCount, // add student count to class object
+                };
+            })
+        );
 
         res.status(200).json({
             success: true,
             message: 'All classes retrieved successfully',
-            data: classes,
+            data: classWithCounts,
         });
     } catch (error) {
         console.error('Error fetching classes:', error);

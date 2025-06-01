@@ -16,6 +16,7 @@ import AddTeacher from './pages/superAdmin/AddTeacher'
 import TeacherDashboard from './pages/AdminDa/TeacherDashboard'
 import CreateClass from './Components/CreateClass'
 import ToastProvider from './Components/ToastProvider';
+import StudentActions from './pages/AdminDa/StudentActions'
 
 function App() {
   return (
@@ -37,7 +38,8 @@ function App() {
 
         <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
         <Route path="/students/:id" element={<StudentList />} />
-        <Route path="/add-points/:id" element={<ActionPage />} />
+        <Route path="/action/:id" element={<ActionPage />} />
+        <Route path="/actions" element={<StudentActions />} />
         <Route path="/admin/classes/create" element={<CreateClass />} />
 
 

@@ -53,7 +53,7 @@ function TeacherDashboard() {
                                         <div className="flex items-center gap-2">
                                             <User className="w-5 h-5 text-blue-600" />
                                             <p className="text-gray-600">
-                                                Students: {classInfo?.totalStudents || 0}
+                                                Students: {classInfo?.studentCount || 0}
                                             </p>
                                         </div>
                                         <div className="flex items-center gap-2">
