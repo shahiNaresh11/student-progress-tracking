@@ -23,10 +23,15 @@ function ActionPage() {
 
     const predefinedActions = [
         { id: 1, label: "Late for class", points: -2 },
-        { id: 2, label: "Incomplete homework", points: -4 },
+        { id: 2, label: "Incomplete homework", points: -3 },
         { id: 3, label: "Dress code violation", points: -2 },
-        { id: 4, label: "Disruptive behavior", points: -3 },
-        { id: 5, label: "Unauthorized device use", points: -5 }
+        { id: 4, label: "Disruptive behavior", points: -2 },
+        { id: 5, label: "Unauthorized device use", points: -5 },
+        { id: 6, label: "Fighting", points: -5 },
+        { id: 7, label: "Rude with teacher", points: -5 },
+        { id: 8, label: "fail in internal exams", points: -8 }
+
+
     ];
 
     const positiveActions = [
@@ -34,7 +39,12 @@ function ActionPage() {
         { id: 2, label: "Active participation", points: 8 },
         { id: 3, label: "Extra credit work", points: 8 },
         { id: 4, label: "Perfect attendance (week)", points: 1 },
-        { id: 5, label: "Outstanding achievement", points: 5 }
+        { id: 5, label: "Outstanding sports achievement", points: 5 },
+        { id: 6, label: "Class Leader for Good Conduct", points: 7 },
+        { id: 7, label: "Top perfomer in internal exam", points: 10 },
+
+
+
     ];
 
     const handlePredefinedAction = (points, activity) => {

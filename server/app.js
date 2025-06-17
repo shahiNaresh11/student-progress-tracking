@@ -1,8 +1,11 @@
 import express from 'express';
 import userRoutes from './routes/user.routes.js';
 import teacherRoutes from './routes/teacher.routes.js'
+import recommendationRoutes from './routes/recommendation.routes.js';
+
 import cors from 'cors'
 import cookieParser from 'cookie-parser';
+
 // import AppError from './middlewares/error.middleware.js';
 
 const app = express();
@@ -20,6 +23,7 @@ app.use(
 // Routes
 app.use('/api/v1/user', userRoutes);
 app.use('/api/v1/teacher', teacherRoutes);
+app.use('/api/v1', recommendationRoutes);
 
 // Basic route
 app.get('/', (req, res) => {
