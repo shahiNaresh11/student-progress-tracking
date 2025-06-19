@@ -23,7 +23,7 @@ app.use(
 // Routes
 app.use('/api/v1/user', userRoutes);
 app.use('/api/v1/teacher', teacherRoutes);
-app.use('/api/v1', recommendationRoutes);
+app.use('/api/v1/recommend', recommendationRoutes);
 
 // Basic route
 app.get('/', (req, res) => {
