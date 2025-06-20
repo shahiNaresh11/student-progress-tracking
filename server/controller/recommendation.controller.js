@@ -1,31 +1,30 @@
-// import { getCollaborativeRecommendations } from "../services/.js";
+// import BehaviorAnalyzer from "../services/recommendation.services.js";
 
-import { getSmartRecommendations } from "../services/recommendation.services.js";
+import BehaviorAnalyzer from "../services/recommendation.services.js";
 
-export const getRecommendations = async (req, res) => {
+// Route controller to get combined recommendations
+export const getCombinedRecommendations = async (req, res) => {
     try {
-        const { studentId } = req.params;
+        const studentId = (req.params.studentId || "").trim();
+        console.log("Student ID from request params:", JSON.stringify(studentId));
 
-        if (!studentId || isNaN(studentId)) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid student ID"
-            });
+        if (!studentId) {
+            return res.status(400).json({ success: false, message: "Student ID is required" });
         }
 
-        const recommendations = await getSmartRecommendations(studentId);
+        const analyzer = new BehaviorAnalyzer(studentId);
+        const result = await analyzer.getComprehensiveRecommendations();
 
-        res.json({
+        res.status(200).json({
             success: true,
-            recommendations: recommendations.length > 0
-                ? recommendations
-                : ["No recommendations found for similar students"]
+            recommendations: result
         });
     } catch (error) {
+        console.error("Recommendation generation failed:", error);
         res.status(500).json({
             success: false,
-            message: error.message || "Error generating recommendations",
-            error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            message: "Error generating recommendations",
+            error: error.message
         });
     }
 };

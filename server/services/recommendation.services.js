@@ -1,231 +1,208 @@
-import { Op, Sequelize as sequelize } from 'sequelize';
-import { User, Activity, Point, Attendance } from '../models/index.model.js';
-import { classifyStudent, getReferenceGroup } from '../utils/classifier.js';
+import { Activity, User, Point } from '../models/index.model.js';
+import { Op, Sequelize } from 'sequelize';
 
-// 1. Enhanced main function with better error handling
-export async function getSmartRecommendations(studentId) {
-    if (!studentId) return ["Invalid student ID"];
+const TOP_STUDENT_THRESHOLD = 80;
+const ANALYSIS_WINDOW = 90;
+const MIN_ACTION_FREQUENCY = 3;
 
-    try {
-        const target = await getStudentVector(studentId);
-        const referenceStudents = await getReferenceStudents(studentId, target.vector[4]); // Pass current points
+class BehaviorAnalyzer {
+    constructor(studentId) {
+        this.studentId = studentId;
+    }
 
-        if (referenceStudents.length === 0) {
-            return ["No reference students found for comparison."];
+    async getComprehensiveRecommendations() {
+        try {
+            const [negativeRecs, positiveRecs] = await Promise.all([
+                this.getNegativeBehaviorRecommendations(),
+                this.getPositiveActionRecommendations()
+            ]);
+
+            return {
+                success: true,
+                recommendations: {
+                    behaviorImprovements: negativeRecs,
+                    positiveActionOpportunities: positiveRecs,
+                    combinedPriorityList: this.prioritizeRecommendations(negativeRecs, positiveRecs)
+                }
+            };
+        } catch (error) {
+            console.error('Error in getComprehensiveRecommendations:', error);
+            throw error;
         }
-
-        const avgVector = calculateAverageVector(referenceStudents);
-        const recommendations = generateGapRecommendations(target, avgVector);
-        const topStrategies = await getTopStrategies(referenceStudents);
-
-        return [...recommendations, ...topStrategies];
-    } catch (error) {
-        console.error('Recommendation error:', error);
-        return ["Unable to generate recommendations at this time."];
-    }
-}
-
-// 2. Enhanced student vector with better null checks
-async function getStudentVector(studentId) {
-    try {
-        const [attendance, activities, point] = await Promise.all([
-            Attendance.findAll({ where: { student_id: studentId } }),
-            Activity.findAll({
-                where: { student_id: studentId },
-                order: [['createdAt', 'DESC']]
-            }),
-            Point.findOne({ where: { student_id: studentId } })
-        ]);
-
-        const totalClasses = attendance?.length || 0;
-        const presentCount = attendance?.filter(a => a.status === 'present').length || 0;
-        const lateCount = attendance?.filter(a => a.status === 'late').length || 0;
-
-        // Track frequent negative actions (last 30 days)
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-        const recentNegatives = activities?.filter(a =>
-            a.points < 0 &&
-            new Date(a.createdAt) > thirtyDaysAgo
-        ) || [];
-
-        const activityCounts = {};
-        recentNegatives.forEach(activity => {
-            if (activity?.activity) {
-                activityCounts[activity.activity] = (activityCounts[activity.activity] || 0) + 1;
-            }
-        });
-
-        const frequentNegativeActions = Object.entries(activityCounts)
-            .filter(([_, count]) => count >= 2)
-            .map(([action]) => action);
-
-        return {
-            vector: [
-                totalClasses > 0 ? presentCount / totalClasses : 0,
-                totalClasses > 0 ? lateCount / totalClasses : 0,
-                activities?.filter(a => a.points > 0).length || 0,
-                activities?.filter(a => a.points < 0).length || 0,
-                point?.total_points || 0
-            ],
-            frequentNegativeActions
-        };
-    } catch (error) {
-        console.error('Error getting student vector:', error);
-        return {
-            vector: [0, 0, 0, 0, 0],
-            frequentNegativeActions: []
-        };
-    }
-}
-
-// 3. COMPLETE implementation of getReferenceStudents
-async function getReferenceStudents(targetStudentId, currentPoints = 0) {
-    try {
-        const targetClass = classifyStudent(currentPoints);
-        const referenceClasses = getReferenceGroup(targetClass);
-
-        // Get minimum points for reference group
-        const minPoints = Math.max(
-            referenceClasses.includes('OUTSTANDING') ? 90 :
-                referenceClasses.includes('EXCELLENT') ? 80 : 60,
-            currentPoints // Don't compare with students doing worse
-        );
-
-        const users = await User.findAll({
-            include: [{
-                model: Point,
-                as: 'points', // ✅ FIXED: must match your model association alias
-                required: true,
-                where: { total_points: { [Op.gte]: minPoints } }
-            }],
-            where: { id: { [Op.ne]: targetStudentId } },
-            attributes: ['id'],
-            limit: 50
-        });
-
-
-        if (!users.length) return [];
-
-        // Get vectors for all reference students
-        const studentVectors = await Promise.all(
-            users.map(async user => {
-                const vec = await getStudentVector(user.id);
-                return { ...vec, id: user.id };
-            })
-        );
-
-        return studentVectors.filter(s => s.vector[4] >= currentPoints);
-
-    } catch (error) {
-        console.error('Error finding reference students:', error);
-        return [];
-    }
-}
-
-// 4. Improved recommendation generator with more specific advice
-function generateGapRecommendations(target, refVec) {
-    const { vector, frequentNegativeActions } = target || {};
-    const [targetAtt = 0, targetLate = 0, targetPos = 0, targetNeg = 0, targetPts = 0] = vector || [];
-    const [refAtt = 0, refLate = 0, refPos = 0, refNeg = 0, refPts = 0] = refVec || [];
-
-    const recommendations = [];
-
-    // Specific behavior-based recommendations
-    frequentNegativeActions?.forEach(action => {
-        const lowerAction = action.toLowerCase();
-
-        if (lowerAction.includes('dress code')) {
-            recommendations.push("Repeated dress code violations detected. Please review the school's dress policy and prepare your uniform the night before.");
-        } else if (lowerAction.includes('device') || lowerAction.includes('phone')) {
-            recommendations.push("Frequent unauthorized device usage noted. Keep devices in your bag during class hours to avoid penalties.");
-        } else if (lowerAction.includes('late') || lowerAction.includes('tardy')) {
-            recommendations.push("Multiple late arrivals recorded. Consider setting earlier alarms or preparing your materials the night before.");
-        } else if (lowerAction.includes('homework') || lowerAction.includes('assignment')) {
-            recommendations.push("Several incomplete homework submissions. Try using a planner to track assignments and deadlines.");
-        } else if (lowerAction.includes('disrupt') || lowerAction.includes('behavior')) {
-            recommendations.push("Disruptive behavior observed. Please be mindful of how your actions affect classmates.");
-        } else {
-            // ✅ Generic suggestion for custom repeated actions
-            recommendations.push(`Action detected: "${action}". Consider improving your behavior related to this issue.`);
-        }
-    });
-
-
-    // Performance gap recommendations (only show most critical ones)
-    if (targetAtt < refAtt - 0.15) {
-        recommendations.push("Your attendance rate is significantly lower than peers (missing " +
-            Math.round((refAtt - targetAtt) * 100) + "% more classes).");
     }
 
-    if (targetLate > refLate + 0.15 && !frequentNegativeActions?.some(a => a.toLowerCase().includes('late'))) {
-        recommendations.push("You're arriving late much more often than peers. Aim to arrive 10 minutes early.");
+    async getNegativeBehaviorRecommendations() {
+        const frequentNegatives = await this.getFrequentNegativeActions();
+
+        return frequentNegatives.map(action => ({
+            type: 'BEHAVIOR_CORRECTION',
+            issue: action.activity,
+            occurrenceCount: Number(action.count),
+            severity: this.getBehaviorSeverity(action.activity),
+            improvementTips: this.getNegativeBehaviorTips(action.activity),
+            suggestedReplacements: this.getPositiveReplacements(action.activity),
+            specificRecommendation: action.count > 2 ? this.getSpecificRecommendation(action.activity) : null
+        }));
     }
 
-    if (targetNeg > refNeg + 3) {
-        recommendations.push("You're receiving significantly more negative marks than peers (" +
-            (targetNeg - refNeg) + " more incidents).");
-    }
-
-    if (targetPts < refPts - 15) {
-        recommendations.push("Your point total is substantially below peer average (by " +
-            Math.round(refPts - targetPts) + " points).");
-    }
-
-    return recommendations.length > 0 ? recommendations : ["You're performing similarly to your peers!"];
-}
-
-// 5. calculateAverageVector with better validation
-function calculateAverageVector(students) {
-    if (!students?.length || !students[0]?.vector) return [0, 0, 0, 0, 0];
-
-    const vectorSize = students[0].vector.length;
-    const sumVector = new Array(vectorSize).fill(0);
-    let count = 0;
-
-    students.forEach(student => {
-        if (student?.vector?.length === vectorSize) {
-            student.vector.forEach((value, index) => {
-                sumVector[index] += value || 0;
-            });
-            count++;
-        }
-    });
-
-    return count > 0 ? sumVector.map(sum => sum / count) : [0, 0, 0, 0, 0];
-}
-
-// 6. getTopStrategies with improved query
-async function getTopStrategies(referenceStudents) {
-    if (!referenceStudents?.length) return [];
-
-    const studentIds = referenceStudents.map(s => s.id).filter(Boolean);
-    if (!studentIds.length) return [];
-
-    try {
-        const strategies = await Activity.findAll({
+    async getFrequentNegativeActions() {
+        return Activity.findAll({
             where: {
-                student_id: { [Op.in]: studentIds },
-                points: { [Op.gt]: 0 },
-                createdAt: { [Op.gte]: sequelize.literal('DATE_SUB(NOW(), INTERVAL 3 MONTH)') }
+                student_id: this.studentId,
+                points: { [Op.lt]: 0 },
+                createdAt: {
+                    [Op.gte]: Sequelize.literal(`NOW() - INTERVAL '${ANALYSIS_WINDOW} days'`)
+                }
             },
             attributes: [
                 'activity',
-                [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+                [Sequelize.fn('COUNT', Sequelize.col('id')), 'count'],
+                [Sequelize.fn('SUM', Sequelize.col('points')), 'totalPoints']
             ],
             group: ['activity'],
-            having: sequelize.literal('count >= 3'), // Only show consistently used strategies
-            order: [[sequelize.literal('count'), 'DESC']],
-            limit: 3,
+            having: Sequelize.literal(`COUNT(id) >= ${MIN_ACTION_FREQUENCY}`),
+            order: [[Sequelize.literal('count DESC')]],
             raw: true
         });
+    }
 
-        return strategies.map(strategy =>
-            `Top peers succeed by: ${strategy.activity} (used ${strategy.count} times)`
+    getSpecificRecommendation(action) {
+        const recs = {
+            "Dress code violation": "You've violated the dress code multiple times. Please follow the college rules to avoid disciplinary action.",
+            "Unauthorized device use": "Frequent device misuse observed. Keep phones away during class to stay focused and avoid penalties.",
+            "Incomplete homework": "You often submit incomplete homework. Manage your time better and ask for help when needed.",
+            "Late for class": "You are frequently late. Try setting alarms or preparing the night before.",
+            "Fighting": "Violence is not tolerated. Seek help from a teacher or counselor immediately.",
+            "Rude with teacher": "Disrespecting teachers is serious. Practice respectful communication and ask questions politely.",
+            "Disruptive behavior": "You're being disruptive in class. Focus on listening actively and participating respectfully."
+        };
+        return recs[action] || null;
+    }
+
+    async getPositiveActionRecommendations() {
+        const [topActions, myActions] = await Promise.all([
+            this.getTopStudentActions(),
+            this.getStudentPositiveActions()
+        ]);
+
+        const missingActions = topActions.filter(
+            top => !myActions.some(my => my.activity === top.activity)
         );
-    } catch (error) {
-        console.error('Error finding top strategies:', error);
-        return [];
+
+        return missingActions.map(action => ({
+            type: 'POSITIVE_ACTION',
+            action: action.activity,
+            averagePoints: parseFloat(action.avgPoints),
+            adoptionRate: `${Math.round((action.studentCount / action.totalStudents) * 100)}% of top students`,
+            implementationTips: [
+                this.getCustomPositiveTip(action.activity)
+            ]
+        }));
+    }
+
+    getCustomPositiveTip(action) {
+        const messages = {
+            "Active participation": "Get involved in class through active participation to stand out academically.",
+            "Extra credit work": "Work on extra credit tasks to gain more points and stand out like top students.",
+            "Helping classmates": "Support your classmates to improve your learning and earn valuable points.",
+            "Perfect attendance": "Maintain perfect attendance to build a strong reputation and gain points.",
+            "Outstanding achievement": "Achieve excellence in academics to gain recognition and top scores.",
+            "Community service": "Participate in community service to contribute and boost your profile.",
+            "Sports achievement": "Engage in sports activities to enhance your skills and earn points.",
+            "Outstanding sports achievement": "Excel in sports to gain recognition and follow in the footsteps of top performers."
+        };
+        return messages[action] || `Try engaging in "${action}" to earn more points and follow what top students are doing.`;
+    }
+
+    async getTopStudentActions() {
+        const topStudents = await User.findAll({
+            include: [{
+                model: Point,
+                as: 'points',
+                where: { total_points: { [Op.gte]: TOP_STUDENT_THRESHOLD } }
+            }],
+            attributes: ['id']
+        });
+
+        if (!topStudents.length) return [];
+
+        return Activity.findAll({
+            where: {
+                student_id: { [Op.in]: topStudents.map(s => s.id) },
+                points: { [Op.gt]: 0 },
+                createdAt: {
+                    [Op.gte]: Sequelize.literal(`NOW() - INTERVAL '${ANALYSIS_WINDOW} days'`)
+                }
+            },
+            attributes: [
+                'activity',
+                [Sequelize.fn('AVG', Sequelize.col('points')), 'avgPoints'],
+                [Sequelize.fn('COUNT', Sequelize.col('id')), 'actionCount'],
+                [Sequelize.fn('COUNT', Sequelize.literal('DISTINCT(student_id)')), 'studentCount'],
+                [Sequelize.literal(`${topStudents.length}`), 'totalStudents']
+            ],
+            group: ['activity'],
+            having: Sequelize.literal(`COUNT(id) >= ${MIN_ACTION_FREQUENCY}`),
+            order: [[Sequelize.literal('AVG("points") * COUNT("id") DESC')]],
+            limit: 10,
+            raw: true
+        });
+    }
+
+    async getStudentPositiveActions() {
+        return Activity.findAll({
+            where: {
+                student_id: this.studentId,
+                points: { [Op.gt]: 0 }
+            },
+            attributes: ['activity'],
+            raw: true
+        });
+    }
+
+    prioritizeRecommendations(negatives, positives) {
+        return [
+            ...negatives.map(n => ({
+                ...n,
+                priorityScore: n.occurrenceCount * this.getBehaviorSeverity(n.issue)
+            })),
+            ...positives.map(p => ({
+                ...p,
+                priorityScore: p.averagePoints * 2
+            }))
+        ].sort((a, b) => b.priorityScore - a.priorityScore);
+    }
+
+    getNegativeBehaviorTips(action) {
+        const tips = {
+            "Late for class": ["Set multiple alarms", "Pack your bag the night before"],
+            "Incomplete homework": ["Use a planner", "Work in 25-min focus blocks"]
+        };
+        return tips[action] || ["Consult with your teacher"];
+    }
+
+    getPositiveReplacements(action) {
+        const map = {
+            "Late for class": "Perfect attendance",
+            "Incomplete homework": "Extra credit work",
+            "Disruptive behavior": "Active participation"
+        };
+        return map[action] ? [map[action]] : [];
+    }
+
+    getBehaviorSeverity(action) {
+        const severity = {
+            "Late for class": 2,
+            "Incomplete homework": 3,
+            "Dress code violation": 1,
+            "Disruptive behavior": 3,
+            "Unauthorized device use": 2,
+            "Fighting": 5,
+            "Rude with teacher": 4,
+            "Fail in internal exams": 4
+        };
+        return severity[action] || 1;
     }
 }
+
+export default BehaviorAnalyzer;

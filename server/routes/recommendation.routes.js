@@ -1,13 +1,12 @@
 
 
 import express from "express";
-import { getRecommendations } from "../controller/recommendation.controller.js";
-// import { getRecommendations } from "../controllers/recommendationController.js";
+import { getCombinedRecommendations } from "../controller/recommendation.controller.js";
+
+
 
 const router = express.Router();
-
-// New collaborative filtering endpoint
-router.get("/:studentId", getRecommendations);
+router.get("/:studentId", getCombinedRecommendations);
 
 export default router;
 
