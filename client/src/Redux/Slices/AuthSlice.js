@@ -162,6 +162,23 @@ export const getAssignments = createAsyncThunk("user/assiginment",
   }
 );
 
+export const getRecommendation = createAsyncThunk("user/recommendation",
+  async () => {
+    try {
+      const response = await axiosInstance.get("/recommend");
+      console.log("actvity of recommend", response.data);
+      return response.data;
+
+
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to fetch user recommend");
+      throw error;
+
+    }
+  }
+);
+
+
 // Auth slice
 const authSlice = createSlice({
   name: "auth",
@@ -265,6 +282,18 @@ const authSlice = createSlice({
         state.loading = false;
         state.assiginmentError = action.payload || "Failed to fetch actvity! from extrareducer";
       })
+
+      .addCase(getRecommendation.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(getRecommendation.fulfilled, (state, action) => {
+        state.loading = false;
+        state.recommendationData = action.payload?.recommendations || null;
+      })
+      .addCase(getRecommendation.rejected, (state, action) => {
+        state.loading = false;
+        state.recommendationError = action.payload || "Failed to fetch recommendation data!";
+      });
 
 
   },

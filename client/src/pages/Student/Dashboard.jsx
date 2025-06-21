@@ -1,16 +1,19 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { BsPersonCircle } from "react-icons/bs";
-import { BookOpen, Clock, Award, AlertTriangle } from 'lucide-react';
-import { getStudentAttendance, getUserData, getAssignments } from '../../Redux/Slices/AuthSlice';
+import { BookOpen, Clock, Award, AlertTriangle, Info, AlertCircle, Star, TrendingUp, Flag, CheckCircle } from 'lucide-react';
+import { getRecommendation, getStudentAttendance, getUserData, } from '../../Redux/Slices/AuthSlice';
 import Action from '../../Components/Action';
+import Recommendations from '../../Components/Recommendations';
 
 const Dashboard = () => {
   const dispatch = useDispatch();
   const student = useSelector(state => state.auth.data);
   const attendance = useSelector(state => state.auth.attendanceData);
-  const assiginment = useSelector(state => state.auth.assiginmentData);
   const activity = useSelector(state => state.auth.activityData?.activities);
+  const recommendation = useSelector(state => state.auth.recommendationData);
+
+
 
   console.log("Dashboard component loaded");
   console.log("this is dashbord activity", activity);
@@ -34,9 +37,9 @@ const Dashboard = () => {
   // Total points calculation
   const totalPoints = basePoints + bonusPoints + deducedPoints;
 
-  async function getAssiginment() {
-    await dispatch(getAssignments());
-  }
+  // async function getAssiginment() {
+  //   await dispatch(getAssignments());
+  // }
 
   async function getstudentData() {
     try {
@@ -55,12 +58,23 @@ const Dashboard = () => {
       console.error("Failed to fetch user attendance:", error);
     }
   }
+  async function Recommendation() {
+    try {
+      console.log("user attendance api called");
+      await dispatch(getRecommendation());
+    } catch (error) {
+      console.error("Failed to fetch user Recommendation:", error);
+    }
+  }
+
+
 
   useEffect(() => {
     console.log("useEffect triggered");
     getstudentData();
     getstudentAttendance();
-    getAssiginment();
+    Recommendation();
+
   }, []);
 
   return (
@@ -132,8 +146,8 @@ const Dashboard = () => {
           {/* Right Section */}
           <div className="md:col-span-1">
             {/* Academic Performance */}
-            <div className="bg-white rounded-lg shadow p-6 mb-4">
-              <div className="flex items-center mb-4">
+            {/* <div className="bg-white rounded-lg shadow p-6 mb-4"> */}
+            {/* <div className="flex items-center mb-4">
                 <BookOpen className="mr-2 text-gray-600" size={20} />
                 <h3 className="text-lg font-semibold text-gray-800">Academic Performance</h3>
               </div>
@@ -151,7 +165,7 @@ const Dashboard = () => {
                   <p className="font-semibold">{assiginment?.summary?.missed}</p>
                 </div>
               </div>
-            </div>
+            </div> */}
 
             {/* Attendance */}
             <div className="bg-white rounded-lg shadow p-6">
@@ -174,6 +188,10 @@ const Dashboard = () => {
                 </div>
               </div>
             </div>
+
+            {/* Recommendation Box */}
+            <Recommendations recommendation={recommendation} />
+
           </div>
         </div>
       </div>

@@ -1,12 +1,11 @@
 // import BehaviorAnalyzer from "../services/recommendation.services.js";
 
-import BehaviorAnalyzer from "../services/recommendation.services.js";
+import BehaviorAnalyzer from "../services/recommendation.service.js";
 
 // Route controller to get combined recommendations
 export const getCombinedRecommendations = async (req, res) => {
     try {
-        const studentId = (req.params.studentId || "").trim();
-        console.log("Student ID from request params:", JSON.stringify(studentId));
+        const studentId = req.user.id;  // Get ID from JWT middleware
 
         if (!studentId) {
             return res.status(400).json({ success: false, message: "Student ID is required" });

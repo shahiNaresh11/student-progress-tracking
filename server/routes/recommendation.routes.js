@@ -2,11 +2,12 @@
 
 import express from "express";
 import { getCombinedRecommendations } from "../controller/recommendation.controller.js";
+import { isLoggedIn } from "../middlewares/auth.middleware.js";
 
 
 
 const router = express.Router();
-router.get("/:studentId", getCombinedRecommendations);
+router.get("/", isLoggedIn, getCombinedRecommendations);
 
 export default router;
 
